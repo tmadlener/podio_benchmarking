@@ -1,0 +1,4 @@
+*.pdf
+/python/__pycache__/
+/build/
+/compile_commands.json
