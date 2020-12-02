@@ -2,6 +2,7 @@
 
 import os
 import glob
+import re
 
 import uproot4 as uproot
 import matplotlib.pyplot as plt
@@ -290,23 +291,28 @@ UNIT = {1: ' [ns]', 1e3: ' [us]', 1e6: ' [ms]', 1e9: ' [s]'}
 
 def _make_overview_table(bmdata, setup_steps, print_f,
                          fmt_strings, total_time_f, setup_t_f, per_event_t_f,
-                         sub_header=None):
+                         sub_header=None, no_header=False, no_hlines=False):
     """Internal helper function gluing together the different functions and
     formatting options
     """
     header = fmt_strings['header'].format(*bmdata.keys())
-    hline = '-' * len(header)
+    def hline():
+        if no_hlines:
+            return
+        print_f('-' * len(header))
     vline = fmt_strings['value_line']
 
-    print_f(fmt_strings['header'].format(*bmdata.keys()))
-    print_f(hline)
+
+    if not no_header:
+        print_f(fmt_strings['header'].format(*bmdata.keys()))
+        hline()
 
     if sub_header:
         print_f(sub_header)
-        print_f(hline)
+        print_f(re.sub(r'[^|]', '-', sub_header))
 
     print_f(vline.format('total [s]', *[fmt_time(t, 1e9) for t in total_time_f(bmdata)]))
-    print_f(hline)
+    hline
 
     def setup_line(label, steps=None, scale=1e3):
         print_f(vline.format(
@@ -324,7 +330,7 @@ def _make_overview_table(bmdata, setup_steps, print_f,
         setup_line(step.replace('_', ' '), step, fact)
 
     # per event overview
-    print_f(hline)
+    hline()
     per_event_line('median', np.median)
     per_event_line('min', np.min)
     per_event_line('max', np.max)
@@ -374,7 +380,7 @@ def make_overview_table(bmfiles, setup_steps, print_f=print):
                          total_times, setup_times, per_event_times)
 
 
-def make_multi_overview_table(bmdata, setup_steps, print_f=print, summary_funcs=('min', 'mean', 'max')):
+def make_multi_overview_table(bmdata, setup_steps, print_f=print, summary_funcs=('min', 'mean', 'max'), no_header=False, no_hlines=False):
     """Print an overview table summarizing multiple benchmarks per column, detailing
     some of the setup steps and also giving an overview over the per-event times.
 
@@ -400,11 +406,11 @@ def make_multi_overview_table(bmdata, setup_steps, print_f=print, summary_funcs=
     # Define some format strings for easier line formatting
     column_width = 10 * len(summary_funcs)
     column_header = '| {:^' + '.'.join([str(column_width)] * 2)  + '} '
-    sub_header = ' ' * 25 + ('| {:^8.8} ' * len(summary_funcs)).format(*summary_funcs) * len(bmdata)
+    sub_header = '| ' + ' ' * 25 + ('| {:^8.8} ' * len(summary_funcs)).format(*summary_funcs) * len(bmdata) + '|'
 
     fmt_strings  = {
-        'header': ' ' * 25 + column_header * len(bmdata),
-        'value_line': '{:<24.24} ' + '| {:>8.8} ' * len(summary_funcs) * len(bmdata)
+        'header': '| ' + ' ' * 25 + column_header * len(bmdata) + '|',
+        'value_line': '| {:<24.24} ' + '| {:>8.8} ' * len(summary_funcs) * len(bmdata) + '|'
     }
 
     def setup_times(data, steps=None):
@@ -425,7 +431,7 @@ def make_multi_overview_table(bmdata, setup_steps, print_f=print, summary_funcs=
 
     _make_overview_table(bmdata, setup_steps, print_f,
                          fmt_strings, total_line, setup_times, per_event_times,
-                         sub_header)
+                         sub_header, no_header, no_hlines)
 
 
 def per_event_comparison_plot(bmfiles, steps=None, bins=100, x_range=(0, 2000)):

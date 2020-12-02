@@ -63,11 +63,15 @@ def main(args):
         for label, cases in report_conf.items():
             print_rep(f'\n## {label}')
             bm_data = collect_benchmarks(cases, args.basedir)
-            make_multi_overview_table(bm_data, SETUP_STEPS.get(label, ()), print_rep)
+
+            for case, data in bm_data.items():
+                print_rep(f'\n### {case}')
+                make_multi_overview_table({'dummy': data}, SETUP_STEPS.get(label, ()), print_rep,
+                                          no_header=True, no_hlines=True)
 
             fig = per_event_comparison_plot(bm_data)
             fig.savefig(os.path.join(args.basedir, f'per_event_{label}.png'))
-            print_rep(f'![per event distribution for {label}](per_event_{label}.png)')
+            print_rep(f'\n![per event distribution for {label}](per_event_{label}.png)')
 
 
 if __name__ == '__main__':
