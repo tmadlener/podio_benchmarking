@@ -2,3 +2,6 @@
 /python/__pycache__/
 /build/
 /compile_commands.json
+*.root
+*.sio
+*.out
