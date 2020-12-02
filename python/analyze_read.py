@@ -37,8 +37,8 @@ if __name__ == '__main__':
                         'to printing it to stdout', default=None, type=str)
     parser.add_argument('-f', '--per-event-dist', help='Make per event distribution plot and save it'
                         ' into the filename passed here', default=None, type=str)
-    parser.add_argument('bmfiles', help='Labelled input files that should be analyzed. Format: '
-                        '"label:benchmark_file.root"',
+    parser.add_argument('bmfiles', help='Possibly labelled input files that should be analyzed. '
+                        'Format: "label:benchmark_file.root" or just "benchmark_file.root"',
                         nargs='+', type=str)
 
     clargs = parser.parse_args()

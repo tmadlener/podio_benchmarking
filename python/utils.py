@@ -219,7 +219,12 @@ class MultiBenchmarkData:
 def open_bmfile(input_bmfile):
     """Open a benchmark file and return the data therein as well as the label for
     associated to the file"""
-    label, bmfile = input_bmfile.split(':')
+    label_filename = input_bmfile.split(':')
+    if len(label_filename) == 2:
+        label, bmfile = label_filename
+    else:
+        label = ''
+        bmfile = label_filename[0]
     return label, BenchmarkData(bmfile)
 
 
@@ -227,8 +232,11 @@ def open_all_bmfiles(labelled_files):
     """Open all bmfiles passed as arguments and return a dict using the lables as
     keys and the file data as values"""
     bmfiles = {}
-    for label_file in labelled_files:
+    for icase, label_file in enumerate(labelled_files):
         label, bmfile = open_bmfile(label_file)
+        # Give it a generic label if none is named in the input
+        if not label:
+            label = f'case {icase}'
         bmfiles[label] = bmfile
 
     return bmfiles
