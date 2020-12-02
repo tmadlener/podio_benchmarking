@@ -58,13 +58,13 @@ def pythia(args):
         # root
         converter_args = base_args + [f'{args.outdir}/root/{output_file_base}.{i}.root']
         logfile = f'{args.outdir}/root/{output_file_base}.{i}.out'
-        logger.info(f'Starting run {i} for root I/O')
+        logger.info(f'Starting write benchmark run {i} for root I/O')
         run_k4simdelphes(reader, converter_args, logfile)
 
         # sio
         converter_args = base_args + [f'{args.outdir}/sio/{output_file_base}.{i}.sio']
         logfile = f'{args.outdir}/sio/{output_file_base}.{i}.out'
-        logger.info(f'Starting run {i} for sio I/O')
+        logger.info(f'Starting write benchmark run {i} for sio I/O')
         run_k4simdelphes(reader, converter_args, logfile)
 
 

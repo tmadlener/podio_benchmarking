@@ -1,0 +1,6 @@
+write:
+    sio: 'sio/k4simdelphes_*_output.*.sio.bench.root'
+    root: 'root/k4simdelphes_*_output.*.root.bench.root'
+read:
+    sio: 'sio/k4simdelphes_*_output.*.bench.read.root'
+    root: 'root/k4simdelphes_*_output.*.bench.read.root'

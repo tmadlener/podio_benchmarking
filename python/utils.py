@@ -200,12 +200,14 @@ class MultiBenchmarkData:
 
         all_dists = np.array([hist0] + all_dists)
 
-        return np.mean(all_dists, axis=1), bin_edges
+        return np.mean(all_dists, axis=0), bin_edges
 
     def num_entries(self):
-        """Get the number of entries that were used int he benchmarking. NOTE: simply
-        assuming here that all stored benchmarks have the same number of events"""
-        return self.bm_data[0].num_entries()
+        """Get the number of all entries that were used int he benchmarking. NOTE:
+        simply assuming here that all stored benchmarks have the same number of
+        events
+        """
+        return self.bm_data[0].num_entries() * len(self.bm_data)
 
     def __repr__(self):
         return f'MultiBenchmarkData [{len(self.bm_data)} benchmarks]'

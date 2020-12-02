@@ -34,7 +34,7 @@ def run_on_all_outputs(directory, glob_pattern):
     """Run on all output files matching the glob_pattern"""
     output_files = glob.glob(os.path.join(directory, glob_pattern))
     # filter out the write benchmark files that might slip through the globbing
-    output_files = [f for f in output_files if not f.endswith('.bench.root')]
+    output_files = [f for f in output_files if not '.bench.' in f]
 
     logger.info(f'Found {len(output_files)} files to run the read benchmarks on in {directory}')
     for infile in output_files:
