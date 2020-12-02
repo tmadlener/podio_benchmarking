@@ -37,8 +37,8 @@ def collect_sys_info(print_f):
     cpu = platform.processor()
     if cpu == 'x86_64':
         cpu = get_cpu_info()
-    print_f(f'CPU: `{cpu}`')
-    print_f(f'Total available memory: `{get_mem_info()}`')
+    print_f(f'- CPU: `{cpu}`')
+    print_f(f'- Total available memory: `{get_mem_info()}`')
 
 
 def collect_benchmarks(bm_dict, data_basedir):
