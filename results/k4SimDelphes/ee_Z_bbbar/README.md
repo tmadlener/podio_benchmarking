@@ -6,6 +6,7 @@
 ## write
 
 ### sio
+Results from 10 benchmark runs
 |                          |   min    |   mean   |   max    |
 |--------------------------|----------|----------|----------|
 | total [s]                |    69.93 |    72.67 |    74.31 |
@@ -19,6 +20,7 @@
 | 99 percentile [us]       |     1157 |     1218 |     1310 |
 
 ### root
+Results from 10 benchmark runs
 |                          |   min    |   mean   |   max    |
 |--------------------------|----------|----------|----------|
 | total [s]                |    32.67 |    34.31 |    35.84 |
@@ -36,12 +38,13 @@
 ## read
 
 ### sio
+Results from 10 benchmark runs
 |                          |   min    |   mean   |   max    |
 |--------------------------|----------|----------|----------|
 | total [s]                |    19.13 |    20.14 |    22.46 |
 | total setup [ms]         |    4.924 |    5.164 |    6.125 |
-| read collection ids [us] |    0.152 |    0.210 |    0.481 |
 | close file [us]          |    5.876 |    8.877 |    14.51 |
+| read collection ids [us] |    0.152 |    0.210 |    0.481 |
 | open file [ms]           |    2.677 |    2.796 |    3.149 |
 | constructor [us]         |     2216 |     2357 |     2965 |
 | median [us]              |    186.0 |    195.3 |    212.4 |
@@ -51,12 +54,13 @@
 | 99 percentile [us]       |    307.1 |    331.2 |    456.5 |
 
 ### root
+Results from 10 benchmark runs
 |                          |   min    |   mean   |   max    |
 |--------------------------|----------|----------|----------|
 | total [s]                |    24.22 |    25.51 |    26.84 |
 | total setup [ms]         |    197.9 |    207.9 |    232.4 |
-| read collection ids [us] |    0.401 |    0.456 |    0.598 |
 | close file [us]          |     6512 |     7186 |     7505 |
+| read collection ids [us] |    0.401 |    0.456 |    0.598 |
 | open file [ms]           |    190.8 |    200.7 |    225.0 |
 | constructor [us]         |    0.388 |    0.530 |    0.965 |
 | median [us]              |    186.0 |    197.8 |    210.7 |

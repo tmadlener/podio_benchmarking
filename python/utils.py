@@ -203,12 +203,19 @@ class MultiBenchmarkData:
 
         return np.mean(all_dists, axis=0), bin_edges
 
-    def num_entries(self):
+    def num_entries(self, irun=None):
         """Get the number of all entries that were used int he benchmarking. NOTE:
         simply assuming here that all stored benchmarks have the same number of
-        events
+        events. If a dedicated run is passed, get the number of entries for that
+        run.
         """
+        if irun:
+            return self.bm_data[irun].num_entries()
         return self.bm_data[0].num_entries() * len(self.bm_data)
+
+    def n_runs(self):
+        """Number of runs that are stored in the MultiBenchmark"""
+        return len(self.bm_data)
 
     def __repr__(self):
         return f'MultiBenchmarkData [{len(self.bm_data)} benchmarks]'
