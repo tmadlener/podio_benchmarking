@@ -54,6 +54,10 @@ def run_write_read_benchmark(reader, reader_args, outputfile, label, index, keep
     logging.debug(f'Benchmark results for \'{outputfile}\' will be stored in {read_bm_file}')
     run_read_benchmark(outputfile, read_bm_file)
 
+    if not keep_output:
+        logging.debug(f'Removing outputfile: \'{outputfile}\'')
+        os.remove(outputfile)
+
 
 def create_dir(path):
     """Create the directory if it does not already exist"""
@@ -88,7 +92,8 @@ def pythia(args):
         for case in ['root', 'sio']:
             output_file = f'{args.outdir}/{case}/{output_file_base}.{i}.{case}'
             converter_args = base_args + [output_file]
-            run_write_read_benchmark(reader, converter_args, output_file, case, i)
+            run_write_read_benchmark(reader, converter_args, output_file, case, i,
+                                     args.keep_outputs)
    
 
 def stdhep(args):
@@ -106,7 +111,8 @@ def stdhep(args):
         for case in ['root', 'sio']:
             output_file = f'{args.outdir}/{case}/{output_file_base}.{i}.{case}'
             converter_args = base_args + [output_file, args.input]
-            run_write_read_benchmark(reader, converter_args, output_file, case, i)
+            run_write_read_benchmark(reader, converter_args, output_file, case, i,
+                                     args.keep_outputs)
        
 
 if __name__ == '__main__':
@@ -125,8 +131,9 @@ if __name__ == '__main__':
     global_parser.add_argument('output_config', help='The output configuration for the converter')
     global_parser.add_argument('-o', '--outdir', help='The directory into which the outputs are stored',
                                default='.')
-    global_parser.add_argument('--no-outputs', help='Discard the outputs of the benchmark runs and only '
-                               'keep the benchmark outputs', default=False, action='store_true')
+    global_parser.add_argument('--keep-outputs', help='Keep the output files of the benchmark runs. '
+                               'Default behaviour is to only keep the benchmark results.'
+                               , default=False, action='store_true')
     global_parser.add_argument('-n', '--nruns', help='Number of runs per benchmark case',
                         type=int, default=10)
     global_parser.add_argument('--verbose', help='Enable verbose logger', action='store_true',

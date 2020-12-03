@@ -51,8 +51,12 @@ python run_benchmarks.py pythia \
 
 This will run each case 10 times for each of the two backends: `sio` and `root`.
 It will produce separate folders with the output files as well as with the
-results of the benchmarks, which still have to be analyzed. To have a look at
-one or more benchmark results it is possible to use the `analyze_write.py` and
+results of the benchmarks, which still have to be analyzed. By default
+`run_benchmarks.py` will remove the output files of the converter again directly
+after it has run a complete set of read and write and only keep the files
+containing the benchmark results. If you want to keep the output files add the
+`--keep-outputs` flag to the command above. To have a look at one or more
+benchmark results it is possible to use the `analyze_write.py` and
 `analyze_read.py` scripts that come with this repository. A complete report can
 be generated with the `make_benchmark_report.py` script and the yaml
 [`report_config.yaml`](report_config.yaml) configuration.
