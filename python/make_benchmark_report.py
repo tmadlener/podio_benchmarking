@@ -72,6 +72,7 @@ def main(args):
 
             fig = per_event_comparison_plot(bm_data)
             fig.savefig(os.path.join(args.basedir, f'per_event_{label}.png'))
+            print_rep('\n### per-event comparison plot')
             print_rep(f'\n![per event distribution for {label}](per_event_{label}.png)')
 
 

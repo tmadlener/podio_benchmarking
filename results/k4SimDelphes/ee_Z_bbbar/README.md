@@ -33,6 +33,8 @@ Results from 10 benchmark runs
 | 90 percentile [us]       |    169.0 |    194.3 |    231.2 |
 | 99 percentile [us]       |    446.2 |    547.8 |    695.2 |
 
+### per-event comparison plot
+
 ![per event distribution for write](per_event_write.png)
 
 ## read
@@ -45,8 +47,8 @@ Results from 10 benchmark runs
 | total setup [ms]         |    4.924 |    5.164 |    6.125 |
 | close file [us]          |    5.876 |    8.877 |    14.51 |
 | read collection ids [us] |    0.152 |    0.210 |    0.481 |
-| open file [ms]           |    2.677 |    2.796 |    3.149 |
 | constructor [us]         |     2216 |     2357 |     2965 |
+| open file [ms]           |    2.677 |    2.796 |    3.149 |
 | median [us]              |    186.0 |    195.3 |    212.4 |
 | min [us]                 |    93.70 |    98.98 |    105.3 |
 | max [us]                 |    584.3 |     1296 |     4970 |
@@ -61,12 +63,14 @@ Results from 10 benchmark runs
 | total setup [ms]         |    197.9 |    207.9 |    232.4 |
 | close file [us]          |     6512 |     7186 |     7505 |
 | read collection ids [us] |    0.401 |    0.456 |    0.598 |
-| open file [ms]           |    190.8 |    200.7 |    225.0 |
 | constructor [us]         |    0.388 |    0.530 |    0.965 |
+| open file [ms]           |    190.8 |    200.7 |    225.0 |
 | median [us]              |    186.0 |    197.8 |    210.7 |
 | min [us]                 |    133.8 |    144.8 |    156.5 |
 | max [us]                 | 3.59e+05 | 3.73e+05 | 3.91e+05 |
 | 90 percentile [us]       |    220.9 |    232.9 |    244.2 |
 | 99 percentile [us]       |    311.8 |    344.1 |    461.6 |
+
+### per-event comparison plot
 
 ![per event distribution for read](per_event_read.png)
