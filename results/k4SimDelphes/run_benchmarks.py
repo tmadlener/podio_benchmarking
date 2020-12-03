@@ -13,6 +13,21 @@ logging.basicConfig(
 
 logger = logging.getLogger()
 
+THIS_PATH = os.path.dirname(os.path.realpath(__file__))
+
+def run_read_benchmark(input_file, bm_file):
+    """Run the read benchmarks"""
+    # TODO: install the read_benchmark and use install dir
+    cmd = os.path.realpath(os.path.join(THIS_PATH, '../../build/reading_benchmark/read_benchmark', ))
+    cmd_args = [cmd, bm_file, input_file]
+
+    logger.debug('Running: ' + shlex.join(cmd_args))
+    proc = subprocess.run(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    logger.debug(f'Process returned with exit code {proc.returncode}')
+    if proc.returncode != 0:
+        logger.error(f'Got non-zero exit code from running {shlex.join(cmd_args)}')
+
+
 def run_k4simdelphes(reader, args, logfile):
     """Run the k4simdelphes reader"""
     cmd = os.path.expandvars('${K4SIMDELPHES}/bin/') + reader
@@ -23,6 +38,21 @@ def run_k4simdelphes(reader, args, logfile):
         logger.debug(f'Process returned with exit code {proc.returncode}')
         if proc.returncode != 0:
             logger.error(f'Got non-zero exit code from running {shlex.join([cmd] + args)}')
+
+
+def run_write_read_benchmark(reader, reader_args, outputfile, label, index, keep_output=False):
+    """Run k4SimDelphes to produce an outptu file which will then immediately be
+    used to run read_benchmark.
+    """
+    logfile = outputfile.rsplit('.', 1)[0] + '.out'
+    logger.info(f'Starting write benchmark run {index} for case {label}')
+    run_k4simdelphes(reader, reader_args, logfile)
+
+    read_bm_base = outputfile.rsplit('.', 3)[0] # split of index and file-ending
+    read_bm_file = f'{read_bm_base}.{index}.bench.read.root'
+    logging.info(f'Starting read benchmark run {index} for case {label}')
+    logging.debug(f'Benchmark results for \'{outputfile}\' will be stored in {read_bm_file}')
+    run_read_benchmark(outputfile, read_bm_file)
 
 
 def create_dir(path):
@@ -55,18 +85,11 @@ def pythia(args):
     base_args = [args.card, args.output_config, args.pythia_cmd]
 
     for i in range(args.nruns):
-        # root
-        converter_args = base_args + [f'{args.outdir}/root/{output_file_base}.{i}.root']
-        logfile = f'{args.outdir}/root/{output_file_base}.{i}.out'
-        logger.info(f'Starting write benchmark run {i} for root I/O')
-        run_k4simdelphes(reader, converter_args, logfile)
-
-        # sio
-        converter_args = base_args + [f'{args.outdir}/sio/{output_file_base}.{i}.sio']
-        logfile = f'{args.outdir}/sio/{output_file_base}.{i}.out'
-        logger.info(f'Starting write benchmark run {i} for sio I/O')
-        run_k4simdelphes(reader, converter_args, logfile)
-
+        for case in ['root', 'sio']:
+            output_file = f'{args.outdir}/{case}/{output_file_base}.{i}.{case}'
+            converter_args = base_args + [output_file]
+            run_write_read_benchmark(reader, converter_args, output_file, case, i)
+   
 
 def stdhep(args):
     """Run the stdhep reader"""
@@ -80,18 +103,11 @@ def stdhep(args):
     base_args = [args.card, args.output_config]
 
     for i in range(args.nruns):
-        # root
-        converter_args = base_args + [f'{args.outdir}/root/{output_file_base}.{i}.root', args.input]
-        logfile = f'{args.outdir}/root/{output_file_base}.{i}.out'
-        logger.info(f'Starting run {i} for root I/O')
-        run_k4simdelphes(reader, converter_args, logfile)
-
-        # sio
-        converter_args = base_args + [f'{args.outdir}/sio/{output_file_base}.{i}.sio', args.input]
-        logfile = f'{args.outdir}/sio/{output_file_base}.{i}.out'
-        logger.info(f'Starting run {i} for sio I/O')
-        run_k4simdelphes(reader, converter_args, logfile)
-
+        for case in ['root', 'sio']:
+            output_file = f'{args.outdir}/{case}/{output_file_base}.{i}.{case}'
+            converter_args = base_args + [output_file, args.input]
+            run_write_read_benchmark(reader, converter_args, output_file, case, i)
+       
 
 if __name__ == '__main__':
     import argparse
@@ -107,7 +123,7 @@ if __name__ == '__main__':
 
     global_parser.add_argument('card', help='The delphes card to use')
     global_parser.add_argument('output_config', help='The output configuration for the converter')
-    global_parser.add_argument('-o', '--outdir', help='The directory into which the outputs a',
+    global_parser.add_argument('-o', '--outdir', help='The directory into which the outputs are stored',
                                default='.')
     global_parser.add_argument('--no-outputs', help='Discard the outputs of the benchmark runs and only '
                                'keep the benchmark outputs', default=False, action='store_true')

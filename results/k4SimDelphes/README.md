@@ -41,14 +41,12 @@ To run the `ee_Z_tautau` or the `ee_Z_bbbar` benchmark do the following
 ``` sh
 export CASE=ee_Z_tautau # change to ee_Z_bbbar to run it
 
-python run_write_benchmark.py pythia \
+python run_benchmarks.py pythia \
     --outdir ${CASE} \
     --nruns 10 \
     delphes_card_IDEA.tcl \
     edm4hep_output_config.tcl \
     ${CASE}/${CASE}.cmd
-    
-python run_read_benchmark.py ${CASE}
 ```
 
 This will run each case 10 times for each of the two backends: `sio` and `root`.
@@ -59,3 +57,8 @@ one or more benchmark results it is possible to use the `analyze_write.py` and
 be generated with the `make_benchmark_report.py` script and the yaml
 [`report_config.yaml`](report_config.yaml) configuration.
 
+``` sh
+python ../../python/make_benchmark_report.py report_config.yaml ${CASE}
+```
+
+(assuming the `export CASE` has not changed from above)
