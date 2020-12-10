@@ -26,6 +26,9 @@ def run_read_benchmark(input_file, bm_file):
     logger.debug(f'Process returned with exit code {proc.returncode}')
     if proc.returncode != 0:
         logger.error(f'Got non-zero exit code from running {shlex.join(cmd_args)}')
+        return False
+
+    return True
 
 
 def run_k4simdelphes(reader, args, logfile):
@@ -38,6 +41,9 @@ def run_k4simdelphes(reader, args, logfile):
         logger.debug(f'Process returned with exit code {proc.returncode}')
         if proc.returncode != 0:
             logger.error(f'Got non-zero exit code from running {shlex.join([cmd] + args)}')
+            return False
+
+    return True
 
 
 def run_write_read_benchmark(reader, reader_args, outputfile, label, index, keep_output=False):
@@ -46,7 +52,9 @@ def run_write_read_benchmark(reader, reader_args, outputfile, label, index, keep
     """
     logfile = outputfile.rsplit('.', 1)[0] + '.out'
     logger.info(f'Starting write benchmark run {index} for case {label}')
-    run_k4simdelphes(reader, reader_args, logfile)
+    # We don't have to go any further if we didn't succeed here
+    if not run_k4simdelphes(reader, reader_args, logfile):
+        return
 
     read_bm_base = outputfile.rsplit('.', 3)[0] # split of index and file-ending
     read_bm_file = f'{read_bm_base}.{index}.bench.read.root'
@@ -110,7 +118,7 @@ def stdhep(args):
     for i in range(args.nruns):
         for case in ['root', 'sio']:
             output_file = f'{args.outdir}/{case}/{output_file_base}.{i}.{case}'
-            converter_args = base_args + [output_file, args.input]
+            converter_args = base_args + [output_file, args.inputfile]
             run_write_read_benchmark(reader, converter_args, output_file, case, i,
                                      args.keep_outputs)
        
