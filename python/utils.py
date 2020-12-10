@@ -303,23 +303,31 @@ def _make_overview_table(bmdata, setup_steps, print_f,
     formatting options
     """
     header = fmt_strings['header'].format(*bmdata.keys())
-    def hline():
+    def _sub_header():
+        if sub_header:
+            print_f(sub_header)
+            print_f(re.sub(r'[^|]', '-', sub_header))
+
+    # Helpher function that either prints an hline
+    # Or starts a new table with the given title
+    def hline(title=None):
         if no_hlines:
+            if title:
+                print_f(f'#### {title}')
+                _sub_header()
+
             return
         print_f('-' * len(header))
     vline = fmt_strings['value_line']
-
 
     if not no_header:
         print_f(fmt_strings['header'].format(*bmdata.keys()))
         hline()
 
-    if sub_header:
-        print_f(sub_header)
-        print_f(re.sub(r'[^|]', '-', sub_header))
+    _sub_header()
 
     print_f(vline.format('total [s]', *[fmt_time(t, 1e9) for t in total_time_f(bmdata)]))
-    hline
+    hline('Setup times')
 
     def setup_line(label, steps=None, scale=1e3):
         print_f(vline.format(
@@ -337,7 +345,7 @@ def _make_overview_table(bmdata, setup_steps, print_f,
         setup_line(step.replace('_', ' '), step, fact)
 
     # per event overview
-    hline()
+    hline('Per event times')
     per_event_line('median', np.median)
     per_event_line('min', np.min)
     per_event_line('max', np.max)
