@@ -209,7 +209,7 @@ class MultiBenchmarkData:
         events. If a dedicated run is passed, get the number of entries for that
         run.
         """
-        if irun:
+        if irun is not None:
             return self.bm_data[irun].num_entries()
         return self.bm_data[0].num_entries() * len(self.bm_data)
 

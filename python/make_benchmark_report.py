@@ -66,7 +66,7 @@ def main(args):
 
             for case, data in bm_data.items():
                 print_rep(f'\n### {case}')
-                print_rep(f'Results from {data.n_runs()} benchmark runs')
+                print_rep(f'Results from {data.n_runs()} benchmark runs with {data.num_entries(0)} events each')
                 make_multi_overview_table({'dummy': data}, SETUP_STEPS.get(label, ()), print_rep,
                                           no_header=True, no_hlines=True)
 
