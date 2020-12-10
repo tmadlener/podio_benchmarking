@@ -66,3 +66,41 @@ python ../../python/make_benchmark_report.py report_config.yaml ${CASE}
 ```
 
 (assuming the `export CASE` has not changed from above)
+
+## Running a Higgs recoil @ ILD example
+
+For this we use a slightly adapted version of the standard ILD card, again
+simply fixing the `RandomSeed`. The diff with the version shipped with Delhpes
+is
+
+``` diff
+--- $DELPHES_DIR/cards/delphes_card_ILD.tcl	2020-06-02 13:41:05.000000000 +0200
++++ Higgs_recoil_at_ILD/delphes_card_ILD.tcl	2020-12-03 15:35:36.396219719 +0100
+@@ -4,6 +4,8 @@
+ # Order of execution of various modules
+ #######################################
+ 
++set RandomSeed 27182
++
+ set ExecutionPath {
+   ParticlePropagator
+```
+
+In this case we are using a stdhep input file, which we can get via:
+
+``` sh
+wget -P Higgs_recoil_at_ILD/ http://osggridftp02.slac.stanford.edu:8080/sdf/group/lcddata/ilc/prod/ilc/mc-dbd/generated/250-TDR_ws/higgs/E250-TDR_ws.Pe2e2h.Gwhizard-1_95.eL.pR.I106479.001.stdhep
+```
+
+Running this benchmark and generating a report can be done via
+
+``` sh
+    python run_benchmarks.py stdhep \
+    --outdir Higgs_recoil_at_ILD \
+    --nruns 10 \
+    Higgs_recoil_at_ILD/delphes_card_ILD.tcl \
+    edm4hep_output_config.tcl \
+    Higgs_recoil_at_ILD/E250-TDR_ws.Pe2e2h.Gwhizard-1_95.eL.pR.I106479.001.stdhep
+    
+python ../../python/make_benchmark_report.py report_config.yaml Higgs_recoil_at_ILD
+```

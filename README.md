@@ -27,10 +27,7 @@ pip install uproot4 awkward1 numpy matplotlib
 ### podio
 [podio](https://github.com/AIDASoft/podio) with the changes from
 [podio#155](https://github.com/AIDASoft/podio/pull/155) merged in order to have
-the `TimedWriter` and `TimedReader` available. Additionally, for the results
-here [podio#144](https://github.com/AIDASoft/podio/pull/144) has been applied
-here as well, as that is one thing that will likely be adapted in a future
-version of podio.
+the `TimedWriter` and `TimedReader` available.
 
 ### EDM4HEP
 [EDM4HEP](https://github.com/key4hep/EDM4HEP) needs to be built in any case for
@@ -41,6 +38,8 @@ running `k4SimDelphes`
 source, because some changes are necessary to instrument the Delphes readers to
 actually use the `TimedWriter` to produce the benchmark output for the writing
 case.
+
+Make sure to define `K4SIMDELPHES` to point to the install directory and also put `$K4SIMDELPHES/bin` onto the `LD_LIBRARY_PATH`.
 
 #### Necessary changes
 To instrument the readers from `k4SimDelphes` the `podioWriter` has to be a
