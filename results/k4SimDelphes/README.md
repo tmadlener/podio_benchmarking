@@ -104,3 +104,8 @@ Running this benchmark and generating a report can be done via
     
 python ../../python/make_benchmark_report.py report_config.yaml Higgs_recoil_at_ILD
 ```
+
+### The 'root zlib compression' case
+At the HSF WLCG workshop some results were presented for the benchmarks and
+there we were using the same compression for `sio` and `root`. These have been
+added as the *root zlib compression* case in this example.
