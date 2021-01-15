@@ -90,14 +90,15 @@ def pythia(args):
     logger.debug('Running pythia reader')
     reader = 'DelphesPythia8_EDM4HEP'
 
+    cases = ['root', 'sio']
     output_file_base = 'k4simdelphes_pythia_output'
     # prepare output directories for both cases
-    create_case_output_dirs(args.outdir, ['root', 'sio'])
+    create_case_output_dirs(args.outdir, cases)
 
     base_args = [args.card, args.output_config, args.pythia_cmd]
 
     for i in range(args.nruns):
-        for case in ['root', 'sio']:
+        for case in cases:
             output_file = f'{args.outdir}/{case}/{output_file_base}.{i}.{case}'
             converter_args = base_args + [output_file]
             run_write_read_benchmark(reader, converter_args, output_file, case, i,
@@ -109,14 +110,15 @@ def stdhep(args):
     logger.debug('Running pythia reader')
     reader = 'DelphesSTDHEP_EDM4HEP'
 
+    cases = ['root', 'sio']
     output_file_base = 'k4simdelphes_stdhep_output'
-    create_case_output_dirs(args.outdir, ['root', 'sio'])
+    create_case_output_dirs(args.outdir, cases)
 
 
     base_args = [args.card, args.output_config]
 
     for i in range(args.nruns):
-        for case in ['root', 'sio']:
+        for case in cases:
             output_file = f'{args.outdir}/{case}/{output_file_base}.{i}.{case}'
             converter_args = base_args + [output_file, args.inputfile]
             run_write_read_benchmark(reader, converter_args, output_file, case, i,
