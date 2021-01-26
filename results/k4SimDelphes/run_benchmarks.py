@@ -4,6 +4,10 @@ import subprocess
 import os
 import logging
 import shlex
+from contextlib import contextmanager
+from timeit import default_timer
+from datetime import timedelta
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -15,15 +19,58 @@ logger = logging.getLogger()
 
 THIS_PATH = os.path.dirname(os.path.realpath(__file__))
 
-def run_read_benchmark(input_file, bm_file):
+class WallTimeRecorder():
+    def __init__(self):
+        self.write_times = []
+        self.read_times = []
+
+    def add_read(self, time):
+        self.read_times.append(time)
+
+    def add_write(self, time):
+        self.write_times.append(time)
+
+def store_wall_times(wtime_recorder, filename):
+    with open(filename, 'w') as logfile:
+        logfile.write('write,read\n')
+        for twrite, tread in zip(wtime_recorder.write_times, wtime_recorder.read_times):
+            logfile.write(f'{twrite}, {tread}\n')
+
+
+@contextmanager
+def elapsed_timer():
+    start_time = default_timer()
+
+    class _Timer():
+        start = start_time
+        end = default_timer()
+
+        def __str__(self):
+            duration = timedelta(seconds=self.duration())
+            return f'{duration.seconds}.{duration.microseconds}'
+
+        def duration(self):
+            return self.end - self.start
+
+    yield _Timer
+
+    _Timer.end = default_timer()
+
+
+def run_read_benchmark(input_file, bm_file, wtime_recorder):
     """Run the read benchmarks"""
     # TODO: install the read_benchmark and use install dir
     cmd = os.path.realpath(os.path.join(THIS_PATH, '../../build/reading_benchmark/read_benchmark', ))
     cmd_args = [cmd, bm_file, input_file]
 
     logger.debug('Running: ' + shlex.join(cmd_args))
-    proc = subprocess.run(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    logger.debug(f'Process returned with exit code {proc.returncode}')
+    with elapsed_timer() as timer:
+        proc = subprocess.run(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+    logger.debug(f'Process ran {timer()} s'
+                 f' and returned with exit code {proc.returncode}')
+    wtime_recorder.add_read(timer().duration())
+
     if proc.returncode != 0:
         logger.error(f'Got non-zero exit code from running {shlex.join(cmd_args)}')
         return False
@@ -31,14 +78,18 @@ def run_read_benchmark(input_file, bm_file):
     return True
 
 
-def run_k4simdelphes(reader, args, logfile):
+def run_k4simdelphes(reader, args, logfile, wtime_recorder):
     """Run the k4simdelphes reader"""
     cmd = os.path.expandvars('${K4SIMDELPHES}/bin/') + reader
 
     logger.debug('Running: ' + shlex.join([cmd] + args))
     with open(logfile, 'w') as logf:
-        proc = subprocess.run([cmd] + args, stdout=logf, stderr=subprocess.STDOUT, text=True)
-        logger.debug(f'Process returned with exit code {proc.returncode}')
+        with elapsed_timer() as timer:
+            proc = subprocess.run([cmd] + args, stdout=logf, stderr=subprocess.STDOUT, text=True)
+        logger.debug(f'Process ran {timer()} s'
+                     f' and returned with exit code {proc.returncode}')
+        wtime_recorder.add_write(timer().duration())
+
         if proc.returncode != 0:
             logger.error(f'Got non-zero exit code from running {shlex.join([cmd] + args)}')
             return False
@@ -46,21 +97,22 @@ def run_k4simdelphes(reader, args, logfile):
     return True
 
 
-def run_write_read_benchmark(reader, reader_args, outputfile, label, index, keep_output=False):
+def run_write_read_benchmark(reader, reader_args, outputfile, label, index, wtime_rec,
+                             keep_output=False):
     """Run k4SimDelphes to produce an outptu file which will then immediately be
     used to run read_benchmark.
     """
     logfile = outputfile.rsplit('.', 1)[0] + '.out'
     logger.info(f'Starting write benchmark run {index} for case {label}')
     # We don't have to go any further if we didn't succeed here
-    if not run_k4simdelphes(reader, reader_args, logfile):
+    if not run_k4simdelphes(reader, reader_args, logfile, wtime_rec):
         return
 
     read_bm_base = outputfile.rsplit('.', 3)[0] # split of index and file-ending
     read_bm_file = f'{read_bm_base}.{index}.bench.read.root'
     logging.info(f'Starting read benchmark run {index} for case {label}')
     logging.debug(f'Benchmark results for \'{outputfile}\' will be stored in {read_bm_file}')
-    run_read_benchmark(outputfile, read_bm_file)
+    run_read_benchmark(outputfile, read_bm_file, wtime_rec)
 
     if not keep_output:
         logging.debug(f'Removing outputfile: \'{outputfile}\'')
@@ -97,13 +149,16 @@ def pythia(args):
 
     base_args = [args.card, args.output_config, args.pythia_cmd]
 
+    wall_time_rec = {case: WallTimeRecorder() for case in cases}
+
     for i in range(args.nruns):
         for case in cases:
             output_file = f'{args.outdir}/{case}/{output_file_base}.{i}.{case}'
             converter_args = base_args + [output_file]
             run_write_read_benchmark(reader, converter_args, output_file, case, i,
+                                     wall_time_rec[case],
                                      args.keep_outputs)
-   
+
 
 def stdhep(args):
     """Run the stdhep reader"""
@@ -117,13 +172,19 @@ def stdhep(args):
 
     base_args = [args.card, args.output_config]
 
+    wall_time_rec = {case: WallTimeRecorder() for case in cases}
+
     for i in range(args.nruns):
         for case in cases:
             output_file = f'{args.outdir}/{case}/{output_file_base}.{i}.{case}'
             converter_args = base_args + [output_file, args.inputfile]
             run_write_read_benchmark(reader, converter_args, output_file, case, i,
+                                     wall_time_rec[case],
                                      args.keep_outputs)
-       
+
+    for case in cases:
+        store_wall_times(wall_time_rec[case], f'{args.outdir}/wall_times_{case}.csv')
+
 
 if __name__ == '__main__':
     import argparse
