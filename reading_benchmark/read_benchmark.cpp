@@ -130,11 +130,36 @@ void touchAllCollections(podio::EventStore& store,
 
 }
 
+constexpr auto helpmessage = R"help(
+Small program to touch different collections in the input_file to benchmark read performance.
+
+Args:
+    benchmark_file: File into which the benchmark results are written
+    input_file:     File to use for the read benchmark. Either .root or .sio, the proper reader
+                    will be instantiated automatically
+    collections:    List of collection names that should be 'touched'. If none are passed, all
+                    collections that are present in the input file will be touched.
+)help";
+
 int main(int argc, char* argv[]) {
+  std::vector<std::string> collectionsToTouch;
+
   if (argc < 3) {
-    std::cerr << "usage: read_benchmark benchmark_file input_file" << std::endl;
+    std::cerr << "usage: read_benchmark benchmark_file input_file [collections]" << std::endl;
+
+    if (argc == 2 && (argv[1] == std::string("-h") || argv[1] == std::string("--help"))) {
+      std::cout << helpmessage << std::endl;
+    }
     return 1;
   }
+
+  if (argc > 3) {
+    for (int i = 3; i < argc; ++i) {
+      collectionsToTouch.push_back(argv[i]);
+    }
+  }
+
+  const bool touchAll = collectionsToTouch.empty();
 
   podio::benchmark::BenchmarkRecorder benchmarkRecorder{argv[1]};
   auto reader = getReader(argv[2], benchmarkRecorder);
@@ -147,9 +172,24 @@ int main(int argc, char* argv[]) {
   // happen in this step
   const auto& collectionNames = store.getCollectionIDTable()->names();
 
+  // clean the collections to touch to not break things
+  for (auto it = collectionsToTouch.begin(); it != collectionsToTouch.end();) {
+    if (std::find(collectionNames.begin(), collectionNames.end(), *it) == collectionNames.end()) {
+      std::cerr << "WARNING: Requesting to touch collection \'" << *it << "\' which is not present in the input file. Ignoring it" << std::endl;
+      it = collectionsToTouch.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
   const auto nEvents = reader->getEntries();
   for (unsigned i = 0; i < nEvents; ++i) {
-    touchAllCollections(store, collectionNames);
+
+    if (touchAll) {
+      touchAllCollections(store, collectionNames);
+    } else {
+      touchAllCollections(store, collectionsToTouch);
+    }
 
     store.clear();
     reader->endOfEvent();
