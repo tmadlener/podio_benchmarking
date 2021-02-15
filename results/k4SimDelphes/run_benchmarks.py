@@ -19,6 +19,16 @@ logger = logging.getLogger()
 
 THIS_PATH = os.path.dirname(os.path.realpath(__file__))
 
+TASKSET = ''
+
+def set_taskset(arg):
+    """Set the taskset global string variable to be used for all invocations of a
+    reader or writer command"""
+    if arg:
+        global TASKSET
+        TASKSET = ['taskset', '-c', arg]
+
+
 class WallTimeRecorder():
     def __init__(self):
         self.write_times = []
@@ -61,7 +71,11 @@ def run_read_benchmark(input_file, bm_file, wtime_recorder, read_colls):
     """Run the read benchmarks"""
     # TODO: install the read_benchmark and use install dir
     cmd = os.path.realpath(os.path.join(THIS_PATH, '../../build/reading_benchmark/read_benchmark', ))
+
     cmd_args = [cmd, bm_file, input_file]
+    if TASKSET:
+        cmd_args = TASKSET + cmd_args
+
     if read_colls:
         for coll in read_colls.split(','):
             cmd_args.append(coll)
@@ -85,10 +99,14 @@ def run_k4simdelphes(reader, args, logfile, wtime_recorder):
     """Run the k4simdelphes reader"""
     cmd = os.path.expandvars('${K4SIMDELPHES}/bin/') + reader
 
-    logger.debug('Running: ' + shlex.join([cmd] + args))
+    cmd_args = [cmd] + args
+    if TASKSET:
+        cmd_args = TASKSET + cmd_args
+
+    logger.debug('Running: ' + shlex.join(cmd_args))
     with open(logfile, 'w') as logf:
         with elapsed_timer() as timer:
-            proc = subprocess.run([cmd] + args, stdout=logf, stderr=subprocess.STDOUT, text=True)
+            proc = subprocess.run(cmd_args, stdout=logf, stderr=subprocess.STDOUT, text=True)
         logger.debug(f'Process ran {timer()} s'
                      f' and returned with exit code {proc.returncode}')
         wtime_recorder.add_write(timer().duration())
@@ -212,6 +230,9 @@ if __name__ == '__main__':
     global_parser.add_argument('-c', '--collections', help='Only touch the specified collections '
                                '(comma separated)',
                                default=None)
+    global_parser.add_argument('--pin', help='Pin the reading/writing benchmark processes to a '
+                               'given cpu or range of cpus with the use of \'taskset -c\'',
+                               default=None, type=set_taskset)
 
     pythia_parser = readers.add_parser('pythia', description='Use the Pythia8 reader',
                                        parents=[global_parser])
