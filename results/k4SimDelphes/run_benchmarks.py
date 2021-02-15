@@ -57,11 +57,14 @@ def elapsed_timer():
     _Timer.end = default_timer()
 
 
-def run_read_benchmark(input_file, bm_file, wtime_recorder):
+def run_read_benchmark(input_file, bm_file, wtime_recorder, read_colls):
     """Run the read benchmarks"""
     # TODO: install the read_benchmark and use install dir
     cmd = os.path.realpath(os.path.join(THIS_PATH, '../../build/reading_benchmark/read_benchmark', ))
     cmd_args = [cmd, bm_file, input_file]
+    if read_colls:
+        for coll in read_colls.split(','):
+            cmd_args.append(coll)
 
     logger.debug('Running: ' + shlex.join(cmd_args))
     with elapsed_timer() as timer:
@@ -98,7 +101,7 @@ def run_k4simdelphes(reader, args, logfile, wtime_recorder):
 
 
 def run_write_read_benchmark(reader, reader_args, outputfile, label, index, wtime_rec,
-                             keep_output=False):
+                             read_colls=None, keep_output=False):
     """Run k4SimDelphes to produce an outptu file which will then immediately be
     used to run read_benchmark.
     """
@@ -112,7 +115,8 @@ def run_write_read_benchmark(reader, reader_args, outputfile, label, index, wtim
     read_bm_file = f'{read_bm_base}.{index}.bench.read.root'
     logging.info(f'Starting read benchmark run {index} for case {label}')
     logging.debug(f'Benchmark results for \'{outputfile}\' will be stored in {read_bm_file}')
-    run_read_benchmark(outputfile, read_bm_file, wtime_rec)
+    if not run_read_benchmark(outputfile, read_bm_file, wtime_rec, read_colls):
+        return
 
     if not keep_output:
         logging.debug(f'Removing outputfile: \'{outputfile}\'')
@@ -144,20 +148,9 @@ def pythia(args):
 
     cases = ['root', 'sio']
     output_file_base = 'k4simdelphes_pythia_output'
-    # prepare output directories for both cases
-    create_case_output_dirs(args.outdir, cases)
 
-    base_args = [args.card, args.output_config, args.pythia_cmd]
-
-    wall_time_rec = {case: WallTimeRecorder() for case in cases}
-
-    for i in range(args.nruns):
-        for case in cases:
-            output_file = f'{args.outdir}/{case}/{output_file_base}.{i}.{case}'
-            converter_args = base_args + [output_file]
-            run_write_read_benchmark(reader, converter_args, output_file, case, i,
-                                     wall_time_rec[case],
-                                     args.keep_outputs)
+    args_f = lambda o: [args.card, args.output_config, args.pythia_cmd, o]
+    run(args, reader, args_f, cases, output_file_base)
 
 
 def stdhep(args):
@@ -167,19 +160,26 @@ def stdhep(args):
 
     cases = ['root', 'sio']
     output_file_base = 'k4simdelphes_stdhep_output'
+
+    args_f = lambda o : [args.card, args.output_config, o, args.inputfile]
+    run(args, reader, args_f, cases, output_file_base)
+
+
+def run(args, reader, reader_arg_f, cases, output_base):
+    """Run the given reader using the base_args for all the cases. reader_arg_f is a
+    function taking as single argument the output file name and returning the
+    arguments to the k4SimDelphes reader as a list of strings.
+    """
     create_case_output_dirs(args.outdir, cases)
-
-
-    base_args = [args.card, args.output_config]
-
     wall_time_rec = {case: WallTimeRecorder() for case in cases}
 
     for i in range(args.nruns):
         for case in cases:
-            output_file = f'{args.outdir}/{case}/{output_file_base}.{i}.{case}'
-            converter_args = base_args + [output_file, args.inputfile]
+            output_file = f'{args.outdir}/{case}/{output_base}.{i}.{case}'
+            converter_args = reader_arg_f(output_file)
             run_write_read_benchmark(reader, converter_args, output_file, case, i,
                                      wall_time_rec[case],
+                                     args.collections,
                                      args.keep_outputs)
 
     for case in cases:
@@ -209,7 +209,9 @@ if __name__ == '__main__':
                         type=int, default=10)
     global_parser.add_argument('--verbose', help='Enable verbose logger', action='store_true',
                                default=False)
-
+    global_parser.add_argument('-c', '--collections', help='Only touch the specified collections '
+                               '(comma separated)',
+                               default=None)
 
     pythia_parser = readers.add_parser('pythia', description='Use the Pythia8 reader',
                                        parents=[global_parser])
