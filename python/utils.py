@@ -442,7 +442,8 @@ def make_multi_overview_table(bmdata, setup_steps, print_f=print, summary_funcs=
         times = [b.per_event_time(stat_f=stat_f) for b in data.values()]
         return [t for t in flatten(times)]
 
-    total_line = lambda d: [t for t in flatten([b.total_time() for b in d.values()])]
+    tt_trees = ('setup_times', 'event_times') # sum only the I/O times here
+    total_line = lambda d: [t for t in flatten([b.total_time(tt_trees) for b in d.values()])]
 
     _make_overview_table(bmdata, setup_steps, print_f,
                          fmt_strings, total_line, setup_times, per_event_times,

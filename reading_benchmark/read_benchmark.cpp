@@ -86,17 +86,37 @@ double doSomething(edm4hep::ConstParticleID part) {
  */
 template<typename CollectionT>
 void touchCollection(const std::string& name,
-                     podio::EventStore& store) {
+                     podio::EventStore& store,
+                     podio::benchmark::BenchmarkRecorderTree& sizeRecorder) {
   const auto& collection = store.get<CollectionT>(name);
   if (!collection.isValid()) {
     std::cerr << "ERROR: collection " << name << " not valid" << std::endl;
   }
 
+  // have t slightly cheat here to be able to easily use the
+  // BenchmarkRecorderTree since it only accepts std::chrono::duration
+  sizeRecorder.recordTime(name + "_size", std::chrono::nanoseconds(collection.size()));
+
+  // If we have a jet collection, we do some more data collecting
+  if constexpr (std::is_same_v<CollectionT, edm4hep::ReconstructedParticleCollection>) {
+    if (name == "Jet") {
+      size_t nTracks{0}, nClusters{0};
+      for (const auto jet : collection) {
+        for (const auto constituent : jet.getParticles()) {
+          nTracks += constituent.getTracks().size();
+          nClusters += constituent.getClusters().size();
+        }
+      }
+
+      sizeRecorder.recordTime(name + "_Tracks_size", std::chrono::nanoseconds(nTracks));
+      sizeRecorder.recordTime(name + "_Clusters_size", std::chrono::nanoseconds(nClusters));
+    }
+  }
+ 
   double tmp = 0;
   for (const auto elem : collection) {
     tmp += doSomething(elem);
   }
-
 }
 
 /**
@@ -104,30 +124,47 @@ void touchCollection(const std::string& name,
  * an event are also actually read from file, even if they are lazily read.
  */
 void touchAllCollections(podio::EventStore& store,
-                         const std::vector<std::string>& collectionNames) {
+                         const std::vector<std::string>& collectionNames,
+                         podio::benchmark::BenchmarkRecorderTree& sizeRecorder) {
   // NOTE: The names and decision logic here is necessarily tailored to what is
   // done in the write benchmarks that produces these input files via
   // k4SimDelphes
   for (const auto& name : collectionNames) {
     if (name == "Particle") {
-      touchCollection<edm4hep::MCParticleCollection>(name, store);
+      touchCollection<edm4hep::MCParticleCollection>(name, store, sizeRecorder);
     } else if (name == "Muon" || name == "Photon" || name == "Electron") {
-      touchCollection<edm4hep::RecoParticleRefCollection>(name, store);
+      touchCollection<edm4hep::RecoParticleRefCollection>(name, store, sizeRecorder);
     } else if (name == "ReconstructedParticles" || name == "Jet" || name == "MissingET") {
-      touchCollection<edm4hep::ReconstructedParticleCollection>(name, store);
+      touchCollection<edm4hep::ReconstructedParticleCollection>(name, store, sizeRecorder);
     } else if (name == "EFlowTrack") {
-      touchCollection<edm4hep::TrackCollection>(name, store);
+      touchCollection<edm4hep::TrackCollection>(name, store, sizeRecorder);
     } else if (name == "EFlowPhoton" || name == "EFlowNeutralHadron") {
-      touchCollection<edm4hep::ClusterCollection>(name, store);
+      touchCollection<edm4hep::ClusterCollection>(name, store, sizeRecorder);
     } else if (name == "MCRecoAssociations") {
-      touchCollection<edm4hep::MCRecoParticleAssociationCollection>(name, store);
+      touchCollection<edm4hep::MCRecoParticleAssociationCollection>(name, store, sizeRecorder);
     } else if (name == "ScalarHT" || name == "ParticleIDs") {
-      touchCollection<edm4hep::ParticleIDCollection>(name, store);
+      touchCollection<edm4hep::ParticleIDCollection>(name, store, sizeRecorder);
     } else {
       std::cerr << "ERROR: Unknown collection: \'" << name << "\'" << std::endl;
     }
   }
 
+}
+
+
+auto getSizeRecorderBranchNames(std::vector<std::string> collNames) {
+  // For jets also record the number of associated Tracks and Clusters to get a
+  // grip on the number of jet constituents
+  if (std::find(collNames.begin(), collNames.end(), "Jet") != collNames.end()) {
+    collNames.push_back("Jet_Tracks");
+    collNames.push_back("Jet_Clusters");
+  }
+
+  for (auto& n : collNames) {
+    n += "_size";
+  }
+
+  return collNames;
 }
 
 constexpr auto helpmessage = R"help(
@@ -140,6 +177,7 @@ Args:
     collections:    List of collection names that should be 'touched'. If none are passed, all
                     collections that are present in the input file will be touched.
 )help";
+
 
 int main(int argc, char* argv[]) {
   std::vector<std::string> collectionsToTouch;
@@ -182,17 +220,23 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  // Set up another BenchmarkRecorderTree to also record the sizes of some
+  // collections to see if these are correlated to some of the times
+  auto& sizeRecorderTree = benchmarkRecorder.addTree("collection_sizes",
+                                                     getSizeRecorderBranchNames(touchAll ? collectionNames : collectionsToTouch));
+
   const auto nEvents = reader->getEntries();
   for (unsigned i = 0; i < nEvents; ++i) {
 
     if (touchAll) {
-      touchAllCollections(store, collectionNames);
+      touchAllCollections(store, collectionNames, sizeRecorderTree);
     } else {
-      touchAllCollections(store, collectionsToTouch);
+      touchAllCollections(store, collectionsToTouch, sizeRecorderTree);
     }
 
     store.clear();
     reader->endOfEvent();
+    sizeRecorderTree.Fill();
   }
 
   reader->closeFile();
