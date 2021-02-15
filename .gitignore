@@ -6,3 +6,4 @@
 *.sio
 *.out
 *.stdhep
+/.clangd/
