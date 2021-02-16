@@ -7,3 +7,7 @@
 *.out
 *.stdhep
 /.clangd/
+
+root_info.txt
+run.log
+wall_times_*.csv
