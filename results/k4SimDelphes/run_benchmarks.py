@@ -9,13 +9,25 @@ from timeit import default_timer
 from datetime import timedelta
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(levelname)8s] - %(asctime)s | %(message)s',
-    datefmt='%d.%m.%Y %H:%M:%S'
-)
-
 logger = logging.getLogger()
+formatter = logging.Formatter('[%(levelname)8s] - %(asctime)s | %(message)s',
+                              datefmt='%d.%m.%Y %H:%M:%S')
+logger.setLevel(logging.DEBUG)
+
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.INFO)
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
+def setup_file_logging(out_basedir):
+    """Setup a logger that prints to file"""
+    create_dir(out_basedir)
+    file_handler = logging.FileHandler(f'{out_basedir}/run.log')
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.DEBUG) # always verbose for files
+    logger.addHandler(file_handler)
+
+
 
 THIS_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -131,13 +143,13 @@ def run_write_read_benchmark(reader, reader_args, outputfile, label, index, wtim
 
     read_bm_base = outputfile.rsplit('.', 3)[0] # split of index and file-ending
     read_bm_file = f'{read_bm_base}.{index}.bench.read.root'
-    logging.info(f'Starting read benchmark run {index} for case {label}')
-    logging.debug(f'Benchmark results for \'{outputfile}\' will be stored in {read_bm_file}')
+    logger.info(f'Starting read benchmark run {index} for case {label}')
+    logger.debug(f'Benchmark results for \'{outputfile}\' will be stored in {read_bm_file}')
     if not run_read_benchmark(outputfile, read_bm_file, wtime_rec, read_colls):
         return
 
     if not keep_output:
-        logging.debug(f'Removing outputfile: \'{outputfile}\'')
+        logger.debug(f'Removing outputfile: \'{outputfile}\'')
         os.remove(outputfile)
 
 
@@ -248,6 +260,8 @@ if __name__ == '__main__':
 
     clargs = parser.parse_args()
     if 'verbose' in clargs and clargs.verbose:
-        logger.setLevel(logging.DEBUG)
+        stream_handler.setLevel(logging.DEBUG)
+
+    setup_file_logging(clargs.outdir)
 
     clargs.func(clargs)
