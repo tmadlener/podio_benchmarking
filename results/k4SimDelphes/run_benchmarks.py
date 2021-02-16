@@ -150,7 +150,11 @@ def run_write_read_benchmark(reader, reader_args, outputfile, label, index, wtim
     if not run_k4simdelphes(reader, reader_args, logfile, wtime_rec):
         return
 
-    read_bm_base = outputfile.rsplit('.', 3)[0] # split of index and file-ending
+    read_bm_base = os.path.join(
+        os.path.dirname(outputfile),
+        os.path.basename(outputfile).split('.')[0]
+    )
+
     read_bm_file = f'{read_bm_base}.{index}.bench.read.root'
     logger.info(f'Starting read benchmark run {index} for case {label}')
     logger.debug(f'Benchmark results for \'{outputfile}\' will be stored in {read_bm_file}')
