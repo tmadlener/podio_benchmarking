@@ -90,8 +90,8 @@ def elapsed_timer():
 
 def run_read_benchmark(input_file, bm_file, wtime_recorder, read_colls):
     """Run the read benchmarks"""
-    # TODO: install the read_benchmark and use install dir
-    cmd = os.path.realpath(os.path.join(THIS_PATH, '../../build/reading_benchmark/read_benchmark', ))
+    # Either use a dedicated version from environment or look for one on PATH
+    cmd = os.environ.get('PODIO_READBENCHMARK_EXE', None) or 'read_benchmark'
 
     cmd_args = [cmd, bm_file, input_file]
     if TASKSET:

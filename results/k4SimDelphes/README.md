@@ -7,6 +7,10 @@ reading performance using the
 [`read_benchmark`](../../reading_benchmark/read_benchmark.cpp) utility from this
 repository.
 
+Make sure that the executable that can be built from it can either be found on
+`PATH` or directly point the `PODIO_READBENCHMARK_EXE` environment variable to
+the executable.
+
 To facilitate the benchmarking some helper scripts are present that run the
 different benchmark cases several times, before the results are analyzed and an
 automated report in markdown format is generated and placed in the directory of

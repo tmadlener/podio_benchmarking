@@ -65,3 +65,8 @@ that is used depending on the format of the output file. All of these changes
 can be pulled easily from the
 [tmadlener/podio-benchmarking](https://github.com/tmadlener/k4SimDelphes/tree/podio-benchmarking)
 branch.
+
+## Reading benchmarks
+This repository comes with a simple reading benchmark executable that simply
+touches all (or selected) collections that are produced by `k4SimDelphes`.
+They can easily be built via `cmake`.
