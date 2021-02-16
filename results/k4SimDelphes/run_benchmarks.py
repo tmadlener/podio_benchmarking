@@ -33,6 +33,15 @@ THIS_PATH = os.path.dirname(os.path.realpath(__file__))
 
 TASKSET = ''
 
+
+def store_root_info(out_basedir):
+    version = subprocess.check_output('root-config --version', shell=True,
+                                          stderr=subprocess.DEVNULL).decode()
+    features = subprocess.check_output('root-config --features', shell=True).decode()
+    with open(f'{out_basedir}/root_info.txt', 'w') as infof:
+        infof.write('\n'.join([version.strip(), features.strip()]))
+
+
 def set_taskset(arg):
     """Set the taskset global string variable to be used for all invocations of a
     reader or writer command"""
@@ -263,5 +272,6 @@ if __name__ == '__main__':
         stream_handler.setLevel(logging.DEBUG)
 
     setup_file_logging(clargs.outdir)
+    store_root_info(clargs.outdir)
 
     clargs.func(clargs)

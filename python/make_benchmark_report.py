@@ -37,17 +37,6 @@ def get_mem_info():
     return mem.split(':')[-1].strip()
 
 
-def get_root_info():
-    try:
-        version = subprocess.check_output('root-config --version', shell=True,
-                                          stderr=subprocess.DEVNULL).decode()
-        features = subprocess.check_output('root-config --features', shell=True).decode()
-        return version.strip(), features.strip()
-    except subprocess.CalledProcessError:
-        print('Cannot get root information. Is root setup?')
-        return None, None
-
-
 def collect_sys_info(print_f):
     """Collect and write some system information"""
     cpu = platform.processor()
@@ -55,10 +44,14 @@ def collect_sys_info(print_f):
         cpu = get_cpu_info()
     print_f(f'- CPU: `{cpu}`')
     print_f(f'- Total available memory: `{get_mem_info()}`')
-    root_version, root_features = get_root_info()
-    if root_version:
-        print_f(f'- ROOT version: `{root_version}`')
-        print_f(f'- ROOT featuers: `{root_features}`')
+
+
+def print_root_info(basedir, print_f):
+    """Print read the root info file and print it"""
+    with open(f'{basedir}/root_info.txt', 'r') as infof:
+        version, features = infof.readlines()
+        print_f(f'- ROOT version: `{version.strip()}`')
+        print_f(f'- ROOT features `{features.strip()}`')
 
 
 def collect_benchmarks(bm_dict, data_basedir):
@@ -103,6 +96,7 @@ def main(args):
         print_rep('# Benchmark results')
         print_rep('## System info')
         collect_sys_info(print_rep)
+        print_root_info(args.basedir, print_rep)
 
         wall_times = read_wall_time(args.basedir)
 
@@ -113,10 +107,10 @@ def main(args):
             for case, data in bm_data.items():
                 print_rep(f'\n### {case}')
                 print_rep(f'Results from {data.n_runs()} benchmark runs with {data.num_entries(0)} events each')
-                print_rep(f'\n#### Wall times')
+                print_rep('\n#### Wall times')
                 print_rep(wall_time_table(wall_times, label, case))
 
-                print_rep(f'\n#### I/O times')
+                print_rep('\n#### I/O times')
                 make_multi_overview_table({'dummy': data}, SETUP_STEPS.get(label, ()), print_rep,
                                           no_header=True, no_hlines=True)
 
