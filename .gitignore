@@ -1,5 +1,6 @@
 *.pdf
-/python/__pycache__/
+__pycache__
+__pycache__
 /build/
 /compile_commands.json
 *.root
