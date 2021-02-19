@@ -112,7 +112,7 @@ def per_event_io_times(physics_cases):
     time comparing root and sio"""
     # start with write
     histo_f = lambda v: np.histogram(v / 1e3, bins=100, range=(0, 2000))
-    # lstyles = [(0, (1, 1)), (0, (2, 2)), (0, (2, 3, 1, 3))]
+    lstyles = [(0, (2, 1)), 'solid', (0, (2, 3, 1, 3))]
 
     write_fig = plt.figure()
 
@@ -122,16 +122,20 @@ def per_event_io_times(physics_cases):
         n_ev = n_ev / bmdata.num_entries()
         return plt.step(bin_centers, n_ev, where='mid', **kwargs)
 
-    io_lines = [0, 0]
-
     for icol, (label, base_path) in enumerate(physics_cases.items()):
         sio_data = MultiBenchmarkData(f'{base_path}/sio/k4simdelphes_*_output.*.sio.bench.root')
         root_data = MultiBenchmarkData(f'{base_path}/root/k4simdelphes_*_output.*.root.bench.root')
 
-        io_lines[0], = _plot_hist(sio_data, linestyle=(0, (2, 1)), color=COLORS[icol])
-        io_lines[1], = _plot_hist(root_data, label=label, linestyle='solid', color=COLORS[icol])
+        _plot_hist(sio_data, linestyle=lstyles[0], color=COLORS[icol])
+        _plot_hist(root_data, label=label, linestyle=lstyles[1], color=COLORS[icol])
 
-    io_leg = plt.legend(io_lines, ['sio', 'root'], loc=7)
+    # legend for io_systems
+    io_systems = ['sio', 'root']
+    io_lines = [0 for _ in io_systems]
+    for isys, io_sys in enumerate(io_systems):
+        io_lines[isys], = plt.plot([], [], linestyle=lstyles[isys], color='dimgray')
+
+    io_leg = plt.legend(io_lines, io_systems, loc=7)
     plt.gca().add_artist(io_leg)
 
 
@@ -147,8 +151,11 @@ def per_event_io_times(physics_cases):
         sio_data = MultiBenchmarkData(f'{base_path}/sio/k4simdelphes_*_output.*.bench.read.root')
         root_data = MultiBenchmarkData(f'{base_path}/root/k4simdelphes_*_output.*.bench.read.root')
 
-        io_lines[0], = _plot_hist(sio_data, linestyle=(0, (2, 1)), color=COLORS[icol])
-        io_lines[1], = _plot_hist(root_data, label=label, linestyle='solid', color=COLORS[icol])
+        _plot_hist(sio_data, linestyle=lstyles[0], color=COLORS[icol])
+        _plot_hist(root_data, label=label, linestyle=lstyles[1], color=COLORS[icol])
+
+    for isys, io_sys in enumerate(io_systems):
+        io_lines[isys], = plt.plot([], [], linestyle=lstyles[isys], color='dimgray')
 
     io_leg = plt.legend(io_lines, ['sio', 'root'], loc=7)
     plt.gca().add_artist(io_leg)
