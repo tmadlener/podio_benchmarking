@@ -61,6 +61,7 @@ def collect_overview_data(physics_cases):
         k: pd.DataFrame.from_dict(v, 'index') for k, v in data.items()
     }).transpose(copy=True)
 
+
 def event_contents_plots(physics_cases):
     """Print an overview plot over the event contents for the different physics
     cases"""
@@ -157,7 +158,7 @@ def main():
     # the 6.22/06
     physics_cases = {
         r'$ee\to Z\to b\bar{b}$': 'ee_Z_bbbar_root-6.20.04/',
-        # r'$ee\to Z\to \tau\tau$': 'ee_Z_tautau_root-6.20.04/',
+        r'$ee\to Z\to \tau\tau$': 'ee_Z_tautau_root-6.20.04/',
         r'$ee\to ZH\to \mu\mu X$': 'Higgs_recoil_at_ILD_root-6.20.04/'
     }
 
