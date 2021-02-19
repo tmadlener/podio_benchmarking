@@ -10,6 +10,7 @@ plt.rcParams.update({
     'font.size': 15.0,
     'savefig.bbox': 'tight'
 })
+from matplotlib.patches import Patch
 
 import pandas as pd
 import numpy as np
@@ -22,21 +23,32 @@ from utils import (
     MultiBenchmarkData, BenchmarkData
 )
 
+SIZE_BRANCHES = ['Particle_size', 'ReconstructedParticles_size', 'MCRecoAssociations_size']
+COLORS = ['tab:blue', 'tab:orange', 'tab:red', 'tab:green']
 
-def collect_total_times(base_path):
+def collect_bm_data(base_path):
     """Collect summary data for one physics case given a base path"""
-    times = {'read': {}, 'write': {}}
+    data = {'read': {}, 'write': {}, 'n_objects': {}, 'n_events': {}}
     pattern = {
         'read': 'k4simdelphes_*_output.*.bench.read.root',
         'write': 'k4simdelphes_*_output.*.*.bench.root'
     }
 
     for io_sys in ['sio', 'root']:
-        for case in times.keys():
+        for case in ['read', 'write']:
             bmdata = MultiBenchmarkData(f'{base_path}/{io_sys}/{pattern[case]}')
-            times[case][io_sys] = bmdata.total_time(['setup_times', 'event_times'], ['mean'])[0] / 1e9
+            data[case][io_sys] = bmdata.total_time(['setup_times', 'event_times'], 'mean') / 1e9
 
-    return times
+            if case == 'read':
+                # have to access one specifc bm here, but these numbers are the
+                # same overall in any case
+                bmd = bmdata.bm_data[0]
+                coll_sizes = bmd.collection_sizes.arrays(SIZE_BRANCHES, library='pd')
+
+                data['n_objects'][io_sys] = np.median(np.sum(coll_sizes, axis=1))
+                data['n_events'][io_sys] = bmd.num_entries()
+
+    return data
 
 
 def collect_file_sizes(base_path):
@@ -54,7 +66,7 @@ def collect_overview_data(physics_cases):
     data = {}
     for label, base_path in physics_cases.items():
         data[label] = {}
-        data[label].update(collect_total_times(base_path))
+        data[label].update(collect_bm_data(base_path))
         data[label]['file size'] = collect_file_sizes(base_path)
 
     return pd.concat({
@@ -68,7 +80,6 @@ def event_contents_plots(physics_cases):
     histo_f = lambda v: np.histogram(v, bins=100, range=(0, 400))
     fig = plt.figure()
 
-    colors = ['tab:blue', 'tab:orange', 'tab:red', 'tab:green']
     # lstyles = [(0, (1, 1)), (0, (2, 2)), (0, (2, 3, 1, 3))]
 
     def _plot_hist(data, **kwargs):
@@ -82,10 +93,10 @@ def event_contents_plots(physics_cases):
         bmfile = glob.glob(f'{base_path}/root/k4simdelphes_*_output.0.bench.read.root')[0]
         data = BenchmarkData(bmfile).collection_sizes.arrays(library='pd')
 
-        # _plot_hist(data.loc[:, 'Particle_size'], label='MC', linestyle='dotted', color=colors[icol])
-        # _plot_hist(data.loc[:, 'ReconstructedParticles_size'], label='Reco', linestyle='dashed', color=colors[icol])
-        _plot_hist(np.sum(data.loc[:, ['Particle_size', 'ReconstructedParticles_size', 'MCRecoAssociations_size']], axis=1),
-                   label=label, color=colors[icol])
+        # _plot_hist(data.loc[:, 'Particle_size'], label='MC', linestyle='dotted', color=COLORS[icol])
+        # _plot_hist(data.loc[:, 'ReconstructedParticles_size'], label='Reco', linestyle='dashed', color=COLORS[icol])
+        _plot_hist(np.sum(data.loc[:, SIZE_BRANCHES], axis=1),
+                   label=label, color=COLORS[icol])
 
         plt.xlabel(r'number of total objects per event')
         plt.ylabel('fraction of events')
@@ -101,7 +112,6 @@ def per_event_io_times(physics_cases):
     time comparing root and sio"""
     # start with write
     histo_f = lambda v: np.histogram(v / 1e3, bins=100, range=(0, 2000))
-    colors = ['tab:blue', 'tab:orange', 'tab:red', 'tab:green']
     # lstyles = [(0, (1, 1)), (0, (2, 2)), (0, (2, 3, 1, 3))]
 
     write_fig = plt.figure()
@@ -118,8 +128,8 @@ def per_event_io_times(physics_cases):
         sio_data = MultiBenchmarkData(f'{base_path}/sio/k4simdelphes_*_output.*.sio.bench.root')
         root_data = MultiBenchmarkData(f'{base_path}/root/k4simdelphes_*_output.*.root.bench.root')
 
-        io_lines[0], = _plot_hist(sio_data, linestyle=(0, (2, 1)), color=colors[icol])
-        io_lines[1], = _plot_hist(root_data, label=label, linestyle='solid', color=colors[icol])
+        io_lines[0], = _plot_hist(sio_data, linestyle=(0, (2, 1)), color=COLORS[icol])
+        io_lines[1], = _plot_hist(root_data, label=label, linestyle='solid', color=COLORS[icol])
 
     io_leg = plt.legend(io_lines, ['sio', 'root'], loc=7)
     plt.gca().add_artist(io_leg)
@@ -137,8 +147,8 @@ def per_event_io_times(physics_cases):
         sio_data = MultiBenchmarkData(f'{base_path}/sio/k4simdelphes_*_output.*.bench.read.root')
         root_data = MultiBenchmarkData(f'{base_path}/root/k4simdelphes_*_output.*.bench.read.root')
 
-        io_lines[0], = _plot_hist(sio_data, linestyle=(0, (2, 1)), color=colors[icol])
-        io_lines[1], = _plot_hist(root_data, label=label, linestyle='solid', color=colors[icol])
+        io_lines[0], = _plot_hist(sio_data, linestyle=(0, (2, 1)), color=COLORS[icol])
+        io_lines[1], = _plot_hist(root_data, label=label, linestyle='solid', color=COLORS[icol])
 
     io_leg = plt.legend(io_lines, ['sio', 'root'], loc=7)
     plt.gca().add_artist(io_leg)
@@ -152,13 +162,57 @@ def per_event_io_times(physics_cases):
     return write_fig, read_fig
 
 
+def per_event_object_plot(overview_data):
+    """Make a plot comparing the average number of objects per event to the per
+    event I/O times and per event file sizes"""
+    # get the values for a given sub column and row
+    colv = lambda c: overview_data.loc[:, (slice(None), c)].values
+    n_objects = colv('n_objects')
+    n_entries = colv('n_events')
+
+    # different markers for different physics cases
+    marker = ['o', '^', 'v', 's']
+
+    fig, axes = plt.subplots(3, 1, sharex=True)
+
+    curves = ['read', 'write', 'file size']
+    units = {'read': 'ms', 'write': 'ms', 'file size': 'kB'}
+    for iax, curve in enumerate(curves):
+        vals = colv(curve) / n_entries * 1000
+
+        for imar, io_sys in enumerate(overview_data.index):
+            for icol, case in enumerate(overview_data.columns.levels[0]):
+                axes[iax].scatter(n_objects[imar, icol], vals[imar, icol], color=COLORS[icol],
+                                  marker=marker[imar])
+
+
+    # physics cases legend
+    phys_curves = [Patch(color=COLORS[i]) for i in range(len(overview_data.columns.levels[0]))]
+    axes[-1].legend(phys_curves, overview_data.columns.levels[0], loc=0)
+
+    # curves for io systems legend
+    io_curves = [0 for _ in overview_data.index]
+    for imar in range(len(io_curves)):
+        io_curves[imar], = plt.plot([], [], marker=marker[imar], color='dimgray', linestyle='None')
+
+    axes[0].legend(io_curves, overview_data.index, loc=0)
+
+    fig.subplots_adjust(hspace=0)
+    for i, c in enumerate(curves):
+        plt.setp(axes[i], ylabel=f'{c} / {units[c]}')
+
+    plt.xlabel('median number of objects per event')
+
+    return fig
+
+
 def main():
     """Main"""
     # Using the 6.20/04 versions for now, until we find out what is wrong with
     # the 6.22/06
     physics_cases = {
         r'$ee\to Z\to b\bar{b}$': 'ee_Z_bbbar_root-6.20.04/',
-        r'$ee\to Z\to \tau\tau$': 'ee_Z_tautau_root-6.20.04/',
+        # r'$ee\to Z\to \tau\tau$': 'ee_Z_tautau_root-6.20.04/',
         r'$ee\to ZH\to \mu\mu X$': 'Higgs_recoil_at_ILD_root-6.20.04/'
     }
 
@@ -173,6 +227,10 @@ def main():
     dfr = collect_overview_data(physics_cases)
     # normalize to root and print
     print(dfr.loc[:, :] / dfr.loc['root', :])
+
+    # make plot showing times / file sizes per event as function of the number of objects
+    fig = per_event_object_plot(dfr)
+    fig.savefig('vchep_2021/per_event_per_object_info.pdf')
 
 
 if __name__ == '__main__':

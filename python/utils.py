@@ -152,7 +152,9 @@ class MultiBenchmarkData:
         """
         times = np.array([b.total_time(trees_steps) for b in self.bm_data])
         # Call the numpy version of the function on the times
-        return tuple(getattr(np, f)(times) for f in summary_funcs)
+        if isinstance(summary_funcs, (list, tuple)):
+            return tuple(getattr(np, f)(times) for f in summary_funcs)
+        return getattr(np, summary_funcs)(times)
 
     def per_event_time(self, steps=None, stat_f=np.median, summary_funcs=('min', 'mean', 'max')):
         """Get a summary statistic for the per event times, possibly limited to only a
