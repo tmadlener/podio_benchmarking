@@ -7,28 +7,6 @@
 
 ## write
 
-### sio
-Results from 10 benchmark runs with 17143 events each
-
-#### I/O times
-|                          |   min    |   mean   |   max    |
-|--------------------------|----------|----------|----------|
-| total [s]                |    6.572 |    6.707 |    7.055 |
-#### Setup times
-|                          |   min    |   mean   |   max    |
-|--------------------------|----------|----------|----------|
-| total setup [ms]         |    3.444 |    3.884 |    7.040 |
-| constructor [ms]         |    2.044 |    2.456 |    5.644 |
-| finish [ms]              |    1.375 |    1.417 |    1.489 |
-#### Per event times
-|                          |   min    |   mean   |   max    |
-|--------------------------|----------|----------|----------|
-| median [us]              |    386.0 |    392.0 |    408.1 |
-| min [us]                 |    84.42 |    85.60 |    86.53 |
-| max [us]                 |     2276 |     2947 |     3922 |
-| 90 percentile [us]       |    522.8 |    535.5 |    568.0 |
-| 99 percentile [us]       |    665.8 |    707.2 |    828.4 |
-
 ### root_6.20.04
 Results from 10 benchmark runs with 17143 events each
 
@@ -73,35 +51,55 @@ Results from 10 benchmark runs with 17143 events each
 | 90 percentile [us]       |    504.8 |    636.1 |     1135 |
 | 99 percentile [us]       |     2453 |     2644 |     3165 |
 
+### root_6.22.06 fixed
+Results from 3 benchmark runs with 17143 events each
+
+#### I/O times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| total [s]                |    5.339 |    5.377 |    5.406 |
+#### Setup times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| total setup [ms]         |    456.2 |    466.2 |    475.6 |
+| constructor [ms]         |    31.02 |    31.62 |    32.71 |
+| finish [ms]              |    425.2 |    434.6 |    444.4 |
+#### Per event times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| median [us]              |    170.5 |    172.5 |    174.5 |
+| min [us]                 |    146.1 |    147.0 |    147.5 |
+| max [us]                 | 6.38e+05 | 6.46e+05 | 6.55e+05 |
+| 90 percentile [us]       |    210.2 |    215.1 |    219.3 |
+| 99 percentile [us]       |     2151 |     2180 |     2220 |
+
+### root_6.20.04 fixed
+Results from 3 benchmark runs with 17143 events each
+
+#### I/O times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| total [s]                |    3.841 |    3.958 |    4.104 |
+#### Setup times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| total setup [ms]         |    558.9 |    562.3 |    567.0 |
+| constructor [ms]         |    28.94 |    30.98 |    34.23 |
+| finish [ms]              |    526.8 |    531.3 |    537.2 |
+#### Per event times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| median [us]              |    77.25 |    80.09 |    81.92 |
+| min [us]                 |    53.34 |    57.31 |    60.05 |
+| max [us]                 | 6.47e+05 | 6.74e+05 | 7.06e+05 |
+| 90 percentile [us]       |    116.2 |    126.8 |    144.7 |
+| 99 percentile [us]       |     2088 |     2108 |     2133 |
+
 ### per-event comparison plot
 
 ![per event distribution for write](per_event_write.png)
 
 ## read
-
-### sio
-Results from 10 benchmark runs with 17143 events each
-
-#### I/O times
-|                          |   min    |   mean   |   max    |
-|--------------------------|----------|----------|----------|
-| total [s]                |    1.964 |    2.034 |    2.211 |
-#### Setup times
-|                          |   min    |   mean   |   max    |
-|--------------------------|----------|----------|----------|
-| total setup [ms]         |    2.370 |    2.483 |    2.658 |
-| close file [us]          |    6.663 |    8.105 |    9.663 |
-| open file [ms]           |    0.390 |    0.409 |    0.460 |
-| constructor [us]         |     1971 |     2064 |     2188 |
-| read collection ids [us] |    0.155 |    0.243 |    0.725 |
-#### Per event times
-|                          |   min    |   mean   |   max    |
-|--------------------------|----------|----------|----------|
-| median [us]              |    116.6 |    119.3 |    126.1 |
-| min [us]                 |    32.69 |    33.60 |    34.26 |
-| max [us]                 |     1040 |     1435 |     2007 |
-| 90 percentile [us]       |    146.2 |    151.7 |    167.4 |
-| 99 percentile [us]       |    185.2 |    212.2 |    270.9 |
 
 ### root_6.20.04
 Results from 10 benchmark runs with 17143 events each
@@ -114,8 +112,8 @@ Results from 10 benchmark runs with 17143 events each
 |                          |   min    |   mean   |   max    |
 |--------------------------|----------|----------|----------|
 | total setup [ms]         |    414.2 |    423.5 |    451.7 |
-| close file [us]          |     7316 |     8415 | 1.12e+04 |
 | open file [ms]           |    406.5 |    415.1 |    444.0 |
+| close file [us]          |     7316 |     8415 | 1.12e+04 |
 | constructor [us]         |    0.254 |    0.482 |    1.042 |
 | read collection ids [us] |    0.376 |    0.394 |    0.427 |
 #### Per event times
@@ -133,23 +131,71 @@ Results from 10 benchmark runs with 17143 events each
 #### I/O times
 |                          |   min    |   mean   |   max    |
 |--------------------------|----------|----------|----------|
-| total [s]                |    9.845 |    10.21 |    10.62 |
+| total [s]                |    9.758 |    10.15 |    10.62 |
 #### Setup times
 |                          |   min    |   mean   |   max    |
 |--------------------------|----------|----------|----------|
-| total setup [ms]         |    435.0 |    468.6 |    541.7 |
-| close file [us]          |     6786 |     8817 | 1.45e+04 |
-| open file [ms]           |    426.8 |    459.8 |    534.4 |
-| constructor [us]         |    0.320 |    0.383 |    0.700 |
-| read collection ids [us] |    0.397 |    0.557 |    1.473 |
+| total setup [ms]         |    420.1 |    456.5 |    492.7 |
+| open file [ms]           |    414.5 |    447.8 |    479.1 |
+| close file [us]          |     5565 |     8651 | 1.45e+04 |
+| constructor [us]         |    0.310 |    0.381 |    0.700 |
+| read collection ids [us] |    0.371 |    0.551 |    1.473 |
 #### Per event times
 |                          |   min    |   mean   |   max    |
 |--------------------------|----------|----------|----------|
-| median [us]              |    499.9 |    512.8 |    535.1 |
-| min [us]                 |    414.6 |    423.7 |    439.5 |
+| median [us]              |    497.9 |    511.6 |    535.1 |
+| min [us]                 |    410.0 |    422.7 |    439.5 |
 | max [us]                 | 2.94e+05 | 3.04e+05 | 3.49e+05 |
-| 90 percentile [us]       |    559.5 |    581.8 |    618.1 |
-| 99 percentile [us]       |     1118 |     1217 |     1335 |
+| 90 percentile [us]       |    552.0 |    577.5 |    618.1 |
+| 99 percentile [us]       |     1094 |     1196 |     1335 |
+
+### root_6.22.06 fixed
+Results from 3 benchmark runs with 17143 events each
+
+#### I/O times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| total [s]                |    4.752 |    4.788 |    4.848 |
+#### Setup times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| total setup [ms]         |    425.9 |    430.1 |    434.3 |
+| open file [ms]           |    415.9 |    419.8 |    423.7 |
+| close file [us]          |     9933 | 1.03e+04 | 1.06e+04 |
+| constructor [us]         | 3.80e-02 | 4.40e-02 | 4.80e-02 |
+| read collection ids [us] |    0.151 |    0.171 |    0.185 |
+#### Per event times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| median [us]              |    209.2 |    210.8 |    213.6 |
+| min [us]                 |    144.4 |    146.2 |    148.0 |
+| max [us]                 | 2.90e+05 | 2.91e+05 | 2.93e+05 |
+| 90 percentile [us]       |    248.7 |    251.2 |    256.1 |
+| 99 percentile [us]       |    773.4 |    783.3 |    791.0 |
+
+### root_6.20.04 fixed
+Results from 3 benchmark runs with 17143 events each
+
+#### I/O times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| total [s]                |    3.106 |    3.189 |    3.237 |
+#### Setup times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| total setup [ms]         |    405.8 |    414.6 |    421.7 |
+| open file [ms]           |    396.9 |    406.1 |    413.3 |
+| close file [us]          |     8385 |     8573 |     8815 |
+| constructor [us]         | 4.10e-02 | 4.73e-02 | 5.40e-02 |
+| read collection ids [us] |    0.151 |    0.158 |    0.167 |
+#### Per event times
+|                          |   min    |   mean   |   max    |
+|--------------------------|----------|----------|----------|
+| median [us]              |    116.1 |    120.6 |    123.7 |
+| min [us]                 |    52.99 |    56.15 |    58.27 |
+| max [us]                 | 2.80e+05 | 2.84e+05 | 2.86e+05 |
+| 90 percentile [us]       |    152.3 |    156.4 |    158.6 |
+| 99 percentile [us]       |    704.0 |    716.1 |    725.3 |
 
 ### per-event comparison plot
 
