@@ -48,10 +48,13 @@ def collect_sys_info(print_f):
 
 def print_root_info(basedir, print_f):
     """Print read the root info file and print it"""
-    with open(f'{basedir}/root_info.txt', 'r') as infof:
-        version, features = infof.readlines()
-        print_f(f'- ROOT version: `{version.strip()}`')
-        print_f(f'- ROOT features `{features.strip()}`')
+    try:
+        with open(f'{basedir}/root_info.txt', 'r') as infof:
+            version, features = infof.readlines()
+            print_f(f'- ROOT version: `{version.strip()}`')
+            print_f(f'- ROOT features `{features.strip()}`')
+    except FileNotFoundError:
+        pass
 
 
 def collect_benchmarks(bm_dict, data_basedir):
@@ -107,8 +110,9 @@ def main(args):
             for case, data in bm_data.items():
                 print_rep(f'\n### {case}')
                 print_rep(f'Results from {data.n_runs()} benchmark runs with {data.num_entries(0)} events each')
-                print_rep('\n#### Wall times')
-                print_rep(wall_time_table(wall_times, label, case))
+                if wall_times:
+                    print_rep('\n#### Wall times')
+                    print_rep(wall_time_table(wall_times, label, case))
 
                 print_rep('\n#### I/O times')
                 make_multi_overview_table({'dummy': data}, SETUP_STEPS.get(label, ()), print_rep,

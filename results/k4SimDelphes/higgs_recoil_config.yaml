@@ -1,0 +1,3 @@
+read:
+  sio: 'sio/higgs_recoil*.root'
+  root: 'root/higgs_recoil*.root'
