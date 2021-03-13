@@ -98,7 +98,7 @@ def event_contents_plots(physics_cases):
         _plot_hist(np.sum(data.loc[:, SIZE_BRANCHES], axis=1),
                    label=label, color=COLORS[icol])
 
-        plt.xlabel(r'number of total objects per event')
+        plt.xlabel(r'total number of objects per event')
         plt.ylabel('fraction of events')
         plt.yscale('log')
         plt.legend()
