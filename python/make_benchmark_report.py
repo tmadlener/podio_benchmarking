@@ -14,17 +14,27 @@ from utils import (
     fmt_time
 )
 
-SETUP_STEPS = {
-    'write': (
-        ('constructor', 1e6),
-        ('finish', 1e6)
-    ), 'read': {
-        ('constructor', 1e3),
-        ('open_file', 1e6),
-        ('close_file', 1e3),
-        ('read_collection_ids', 1e3)
-    }
-}
+
+def get_setup_steps(data):
+    """Get all the interesting setup steps from the data"""
+    available = [b.name for b in data.bm_data[0].setup_times.branches]
+    branches_factors = []
+
+    def _get_factor(bmd, branch):
+        val = bmd.setup_times[branch].array()[0]
+        log_val = np.log10(val)
+        factor = 1
+        while log_val > 3:
+            factor *= 1000
+            log_val -= 3
+
+        return factor
+
+    for branch in available:
+        branches_factors.append((branch, _get_factor(data.bm_data[0], branch)))
+
+    return branches_factors
+
 
 def get_cpu_info():
     """Get CPU info using lscpu"""
@@ -110,12 +120,12 @@ def main(args):
             for case, data in bm_data.items():
                 print_rep(f'\n### {case}')
                 print_rep(f'Results from {data.n_runs()} benchmark runs with {data.num_entries(0)} events each')
-                if wall_times:
+                if wall_times and case in wall_times:
                     print_rep('\n#### Wall times')
                     print_rep(wall_time_table(wall_times, label, case))
 
                 print_rep('\n#### I/O times')
-                make_multi_overview_table({'dummy': data}, SETUP_STEPS.get(label, ()), print_rep,
+                make_multi_overview_table({'dummy': data}, get_setup_steps(data), print_rep,
                                           no_header=True, no_hlines=True)
 
             fig = per_event_comparison_plot(bm_data)

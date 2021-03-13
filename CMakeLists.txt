@@ -13,5 +13,6 @@ endif()
 
 find_package(ROOT REQUIRED COMPONENTS RIO Tree)
 find_package(EDM4HEP)
+find_package(LCIO)
 
 add_subdirectory(reading_benchmark)

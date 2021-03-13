@@ -34,26 +34,34 @@ def collect_bm_data(base_path):
         'write': 'k4simdelphes_*_output.*.*.bench.root'
     }
 
-    for io_sys in ['sio', 'root']:
+    n_objects = -1
+    n_entries = -1
+
+    for io_sys in ['sio', 'root', 'slcio']:
         for case in ['read', 'write']:
             bmdata = MultiBenchmarkData(f'{base_path}/{io_sys}/{pattern[case]}')
             data[case][io_sys] = bmdata.total_time(['setup_times', 'event_times'], 'mean') / 1e9
 
-            if case == 'read':
+            if case == 'read' and io_sys == 'root':
                 # have to access one specifc bm here, but these numbers are the
-                # same overall in any case
+                # same overall in any case and also for different io systems
+                # (assuming that we are looking at the same case here)
                 bmd = bmdata.bm_data[0]
                 coll_sizes = bmd.collection_sizes.arrays(SIZE_BRANCHES, library='pd')
+                n_objects = np.median(np.sum(coll_sizes, axis=1))
+                n_entries = bmd.num_entries()
 
-                data['n_objects'][io_sys] = np.median(np.sum(coll_sizes, axis=1))
-                data['n_events'][io_sys] = bmd.num_entries()
+    # Now assign them to all io systems
+    for io_sys in ['sio', 'root', 'slcio']:
+        data['n_objects'][io_sys] = n_objects
+        data['n_events'][io_sys] = n_entries
 
     return data
 
 
 def collect_file_sizes(base_path):
     """Collect the output file sizes of the write operation"""
-    sizes = {'sio': 1, 'root': -1}
+    sizes = {'sio': 1, 'root': -1, 'slcio': -1}
     for io_sys in sizes.keys():
         datafile = glob.glob(f'{base_path}/{io_sys}/k4simdelphes_*_output.0.{io_sys}')[0]
         sizes[io_sys] = os.stat(datafile).st_size / 1024**2
@@ -125,12 +133,14 @@ def per_event_io_times(physics_cases):
     for icol, (label, base_path) in enumerate(physics_cases.items()):
         sio_data = MultiBenchmarkData(f'{base_path}/sio/k4simdelphes_*_output.*.sio.bench.root')
         root_data = MultiBenchmarkData(f'{base_path}/root/k4simdelphes_*_output.*.root.bench.root')
+        lcio_data = MultiBenchmarkData(f'{base_path}/slcio/k4simdelphes_*_output.*.slcio.bench.root')
 
         _plot_hist(sio_data, linestyle=lstyles[0], color=COLORS[icol])
         _plot_hist(root_data, label=label, linestyle=lstyles[1], color=COLORS[icol])
+        _plot_hist(lcio_data, label=label, linestyle=lstyles[2], color=COLORS[icol])
 
     # legend for io_systems
-    io_systems = ['sio', 'root']
+    io_systems = ['sio', 'root', 'lcio']
     io_lines = [0 for _ in io_systems]
     for isys, io_sys in enumerate(io_systems):
         io_lines[isys], = plt.plot([], [], linestyle=lstyles[isys], color='dimgray')
@@ -150,14 +160,16 @@ def per_event_io_times(physics_cases):
     for icol, (label, base_path) in enumerate(physics_cases.items()):
         sio_data = MultiBenchmarkData(f'{base_path}/sio/k4simdelphes_*_output.*.bench.read.root')
         root_data = MultiBenchmarkData(f'{base_path}/root/k4simdelphes_*_output.*.bench.read.root')
+        lcio_data = MultiBenchmarkData(f'{base_path}/slcio/k4simdelphes_*_output.*.bench.read.root')
 
         _plot_hist(sio_data, linestyle=lstyles[0], color=COLORS[icol])
         _plot_hist(root_data, label=label, linestyle=lstyles[1], color=COLORS[icol])
+        _plot_hist(lcio_data, label=label, linestyle=lstyles[2], color=COLORS[icol])
 
     for isys, io_sys in enumerate(io_systems):
         io_lines[isys], = plt.plot([], [], linestyle=lstyles[isys], color='dimgray')
 
-    io_leg = plt.legend(io_lines, ['sio', 'root'], loc=7)
+    io_leg = plt.legend(io_lines, ['sio', 'root', 'lcio'], loc=7)
     plt.gca().add_artist(io_leg)
 
     plt.yscale('log')
@@ -218,9 +230,10 @@ def main():
     # Using the 6.20/04 versions for now, until we find out what is wrong with
     # the 6.22/06
     physics_cases = {
-        r'$ee\to Z\to b\bar{b}$': 'ee_Z_bbbar_root-6.20.04/',
+        # r'$ee\to Z\to b\bar{b}$': 'ee_Z_bbbar_root-6.20.04/',
         # r'$ee\to Z\to \tau\tau$': 'ee_Z_tautau_root-6.20.04/',
-        r'$ee\to ZH\to \mu\mu X$': 'Higgs_recoil_at_ILD_root-6.20.04/'
+        # r'$ee\to ZH\to \mu\mu X$': 'Higgs_recoil_at_ILD_root-6.20.04/'
+        r'$ee\to ZH\to \mu\mu X$': 'lcio_v_edm4hep'
     }
 
     fig = event_contents_plots(physics_cases)

@@ -92,6 +92,8 @@ def run_read_benchmark(input_file, bm_file, wtime_recorder, read_colls):
     """Run the read benchmarks"""
     # Either use a dedicated version from environment or look for one on PATH
     cmd = os.environ.get('PODIO_READBENCHMARK_EXE', None) or 'read_benchmark'
+    if input_file.endswith('.slcio'):
+        cmd = os.environ.get('LCIO_READBENCHMARK_EXE', None) or 'read_benchmark_lcio'
 
     cmd_args = [cmd, bm_file, input_file]
     if TASKSET:
@@ -116,9 +118,9 @@ def run_read_benchmark(input_file, bm_file, wtime_recorder, read_colls):
     return True
 
 
-def run_k4simdelphes(reader, args, logfile, wtime_recorder):
+def run_k4simdelphes(cmd, args, logfile, wtime_recorder):
     """Run the k4simdelphes reader"""
-    cmd = os.path.expandvars('${K4SIMDELPHES}/bin/') + reader
+    # cmd = os.path.expandvars('${K4SIMDELPHES}/bin/') + reader
 
     cmd_args = [cmd] + args
     if TASKSET:
@@ -139,6 +141,16 @@ def run_k4simdelphes(reader, args, logfile, wtime_recorder):
     return True
 
 
+def get_reader_command(reader, outputfile):
+    """Get the correct reader depending on the filename of the output file"""
+    if outputfile.endswith('.slcio'):
+        # dirty, dirty, dirty here, but works for now
+        reader = reader.replace('EDM4HEP', 'LCIO')
+        return os.path.expandvars('${LCIO_DIR}/bin/') + reader
+
+    return os.path.expandvars('${K4SIMDELPHES}/bin/') + reader
+
+
 def run_write_read_benchmark(reader, reader_args, outputfile, label, index, wtime_rec,
                              read_colls=None, keep_output=False):
     """Run k4SimDelphes to produce an outptu file which will then immediately be
@@ -146,8 +158,9 @@ def run_write_read_benchmark(reader, reader_args, outputfile, label, index, wtim
     """
     logfile = outputfile.rsplit('.', 1)[0] + '.out'
     logger.info(f'Starting write benchmark run {index} for case {label}')
+    reader_cmd = get_reader_command(reader, outputfile)
     # We don't have to go any further if we didn't succeed here
-    if not run_k4simdelphes(reader, reader_args, logfile, wtime_rec):
+    if not run_k4simdelphes(reader_cmd, reader_args, logfile, wtime_rec):
         return
 
     read_bm_base = os.path.join(
@@ -201,7 +214,7 @@ def stdhep(args):
     logger.debug('Running pythia reader')
     reader = 'DelphesSTDHEP_EDM4HEP'
 
-    cases = ['root', 'sio']
+    cases = ['root', 'sio', 'slcio']
     output_file_base = 'k4simdelphes_stdhep_output'
 
     args_f = lambda o : [args.card, args.output_config, o, args.inputfile]
