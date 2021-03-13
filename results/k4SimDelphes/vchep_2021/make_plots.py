@@ -122,7 +122,7 @@ def per_event_io_times(physics_cases):
     histo_f = lambda v: np.histogram(v / 1e3, bins=100, range=(0, 2000))
     lstyles = [(0, (2, 1)), 'solid', (0, (2, 3, 1, 3))]
 
-    write_fig = plt.figure()
+    write_fig = plt.figure(figsize=(6.4, 3.2))
 
     def _plot_hist(bmdata, **kwargs):
         n_ev, binning = bmdata.per_event_dist(hist_f=histo_f)
@@ -135,18 +135,18 @@ def per_event_io_times(physics_cases):
         root_data = MultiBenchmarkData(f'{base_path}/root/k4simdelphes_*_output.*.root.bench.root')
         lcio_data = MultiBenchmarkData(f'{base_path}/slcio/k4simdelphes_*_output.*.slcio.bench.root')
 
-        _plot_hist(sio_data, linestyle=lstyles[0], color=COLORS[icol])
-        _plot_hist(root_data, label=label, linestyle=lstyles[1], color=COLORS[icol])
-        _plot_hist(lcio_data, label=label, linestyle=lstyles[2], color=COLORS[icol])
+        _plot_hist(sio_data, label='sio', linestyle=lstyles[1], color=COLORS[0])
+        _plot_hist(root_data, label='root', linestyle=lstyles[1], color=COLORS[1])
+        _plot_hist(lcio_data, label='lcio', linestyle=lstyles[1], color=COLORS[2])
 
     # legend for io_systems
-    io_systems = ['sio', 'root', 'lcio']
-    io_lines = [0 for _ in io_systems]
-    for isys, io_sys in enumerate(io_systems):
-        io_lines[isys], = plt.plot([], [], linestyle=lstyles[isys], color='dimgray')
+    # io_systems = ['sio', 'root', 'lcio']
+    # io_lines = [0 for _ in io_systems]
+    # for isys, io_sys in enumerate(io_systems):
+    #     io_lines[isys], = plt.plot([], [], linestyle=lstyles[isys], color='dimgray')
 
-    io_leg = plt.legend(io_lines, io_systems, loc=7)
-    plt.gca().add_artist(io_leg)
+    # io_leg = plt.legend(io_lines, io_systems, loc=7)
+    # plt.gca().add_artist(io_leg)
 
 
     plt.yscale('log')
@@ -156,21 +156,21 @@ def per_event_io_times(physics_cases):
     plt.xlim(0, 2000)
 
 
-    read_fig = plt.figure()
+    read_fig = plt.figure(figsize=(6.4, 3.2))
     for icol, (label, base_path) in enumerate(physics_cases.items()):
         sio_data = MultiBenchmarkData(f'{base_path}/sio/k4simdelphes_*_output.*.bench.read.root')
         root_data = MultiBenchmarkData(f'{base_path}/root/k4simdelphes_*_output.*.bench.read.root')
         lcio_data = MultiBenchmarkData(f'{base_path}/slcio/k4simdelphes_*_output.*.bench.read.root')
 
-        _plot_hist(sio_data, linestyle=lstyles[0], color=COLORS[icol])
-        _plot_hist(root_data, label=label, linestyle=lstyles[1], color=COLORS[icol])
-        _plot_hist(lcio_data, label=label, linestyle=lstyles[2], color=COLORS[icol])
+        _plot_hist(sio_data, label='sio', linestyle=lstyles[1], color=COLORS[0])
+        _plot_hist(root_data, label='root', linestyle=lstyles[1], color=COLORS[1])
+        _plot_hist(lcio_data, label='lcio', linestyle=lstyles[1], color=COLORS[2])
 
-    for isys, io_sys in enumerate(io_systems):
-        io_lines[isys], = plt.plot([], [], linestyle=lstyles[isys], color='dimgray')
+    # for isys, io_sys in enumerate(io_systems):
+    #     io_lines[isys], = plt.plot([], [], linestyle=lstyles[isys], color='dimgray')
 
-    io_leg = plt.legend(io_lines, ['sio', 'root', 'lcio'], loc=7)
-    plt.gca().add_artist(io_leg)
+    # io_leg = plt.legend(io_lines, ['sio', 'root', 'lcio'], loc=7)
+    # plt.gca().add_artist(io_leg)
 
     plt.yscale('log')
     plt.xlabel(r'per event read times / $\mu$s')
@@ -201,7 +201,7 @@ def per_event_object_plot(overview_data):
 
         for imar, io_sys in enumerate(overview_data.index):
             for icol, case in enumerate(overview_data.columns.levels[0]):
-                axes[iax].scatter(n_objects[imar, icol], vals[imar, icol], color=COLORS[icol],
+                axes[iax].scatter(n_objects[imar, icol], vals[imar, icol], color=COLORS[imar],
                                   marker=marker[imar])
 
 
