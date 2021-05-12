@@ -168,6 +168,80 @@ def per_event_io_times(physics_cases):
 
     return write_fig, read_fig
 
+def per_event_io_times_one_fig(physics_cases):
+    """Plot the per event io times distributions onto one figure with panels for
+    each physics case using one row for reading and one for writing"""
+    histo_f = lambda v: np.histogram(v / 1e3, bins=100, range=(0, 2000))
+    lstyles = [(0, (2, 1)), 'solid', (0, (2, 3, 1, 3))]
+
+    fig_width = 12.8
+    if len(physics_cases) == 1:
+        fig_width = 6.4
+
+    fig, axs = plt.subplots(2, len(physics_cases),
+                            sharex='all', sharey='all', figsize=(fig_width, 4.8),
+                            squeeze=True)
+
+    # Indexing below assumes that the grid is 2D, but with only one physics case
+    # it is essentially 1D. So "duplicate" the axis here, such that the 2D
+    # indexing works below
+    if len(physics_cases) == 1:
+        axs = [(axs[0], axs[0]),
+               (axs[1], axs[1])]
+
+    def _plot_hist(ax, bmdata, **kwargs):
+        n_ev, binning = bmdata.per_event_dist(hist_f=histo_f)
+        bin_centers = 0.5 * (binning[:-1] + binning[1:])
+        n_ev = n_ev / bmdata.num_entries()
+        return ax.step(bin_centers, n_ev, where='mid', **kwargs)
+
+    # plots
+    for icol, base_path in enumerate(physics_cases.values()):
+        sio_data = MultiBenchmarkData(f'{base_path}/sio/k4simdelphes_*_output.*.sio.bench.root')
+        root_data = MultiBenchmarkData(f'{base_path}/root/k4simdelphes_*_output.*.root.bench.root')
+
+        _plot_hist(axs[0][icol], sio_data, linestyle=lstyles[0], color=COLORS[icol])
+        _plot_hist(axs[0][icol], root_data, linestyle=lstyles[1], color=COLORS[icol])
+
+        sio_data = MultiBenchmarkData(f'{base_path}/sio/k4simdelphes_*_output.*.bench.read.root')
+        root_data = MultiBenchmarkData(f'{base_path}/root/k4simdelphes_*_output.*.bench.read.root')
+
+        _plot_hist(axs[1][icol], sio_data, linestyle=lstyles[0], color=COLORS[icol])
+        _plot_hist(axs[1][icol], root_data, linestyle=lstyles[1], color=COLORS[icol])
+
+
+    io_systems = ['sio', 'root']
+   
+    # legends
+    io_curves = [0 for _ in io_systems]
+    for i in range(len(io_curves)):
+        io_curves[i], = plt.plot([], [], linestyle=lstyles[i], color='dimgray', marker='None')
+
+    phys_curves = [0 for _ in physics_cases]
+    for i in range(len(phys_curves)):
+        phys_curves[i], = plt.plot([], [], linestyle='solid', color=COLORS[i], marker='None')
+
+    axs[1][0].legend(io_curves, io_systems, loc=0, fontsize='x-small')
+    axs[0][0].legend(phys_curves, physics_cases.keys(), loc=0, fontsize='x-small')
+
+    # labels for read and write
+    if len(physics_cases) == 1:
+        axs[0][0].text(750, 1e-2, 'write')
+        axs[1][0].text(750, 1e-2, 'read')
+    else:
+        axs[0][-1].text(1500, 1e-2, 'write')
+        axs[1][-1].text(1500, 1e-2, 'read')
+
+
+    fig.subplots_adjust(hspace=0, wspace=0)
+    plt.yscale('log')
+    plt.ylim(3e-8, 1.5e-1)
+    fig.supxlabel(r'time per event / $\mu$s', y=-0.01)
+    fig.supylabel('fraction of events', x=0.05)
+    plt.xlim(0, 1999)
+
+    return fig
+
 
 def per_event_object_plot(overview_data):
     """Make a plot comparing the average number of objects per event to the per
@@ -218,17 +292,20 @@ def main():
     # Using the 6.20/04 versions for now, until we find out what is wrong with
     # the 6.22/06
     physics_cases = {
-        r'$ee\to Z\to b\bar{b}$': 'ee_Z_bbbar_root-6.20.04/',
-        # r'$ee\to Z\to \tau\tau$': 'ee_Z_tautau_root-6.20.04/',
-        r'$ee\to ZH\to \mu\mu X$': 'Higgs_recoil_at_ILD_root-6.20.04/'
+        r'$ee\to Z\to b\bar{b}$': 'chep_final_ee_Z_bbbar',
+        r'$ee\to Z\to \tau\tau$': 'chep_final_ee_Z_tautau',
+        r'$ee\to ZH\to \mu\mu X$': 'chep_final_Higgs_recoil'
     }
 
     fig = event_contents_plots(physics_cases)
     fig.savefig('vchep_2021/event_contents_overview.pdf')
 
     write_fig, read_fig = per_event_io_times(physics_cases)
-    write_fig.savefig('vchep_2021/per_event_write_times.pdf')
-    read_fig.savefig('vchep_2021/per_event_read_times.pdf')
+    write_fig.savefig('vchep_2021/per_event_write_times_Higgs_recoil.pdf')
+    read_fig.savefig('vchep_2021/per_event_read_times_Higgs_recoil.pdf')
+
+    one_fig = per_event_io_times_one_fig(physics_cases)
+    one_fig.savefig('vchep_2021/per_event_read_write_times.pdf')
 
     # print overview data frame
     dfr = collect_overview_data(physics_cases)
