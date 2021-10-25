@@ -1,7 +1,6 @@
 #include "edm4hep/MCParticleCollection.h"
 #include "edm4hep/ReconstructedParticleCollection.h"
 #include "edm4hep/MCRecoParticleAssociationCollection.h"
-#include "edm4hep/RecoParticleRefCollection.h"
 #include "edm4hep/TrackCollection.h"
 #include "edm4hep/ClusterCollection.h"
 #include "edm4hep/ParticleIDCollection.h"
@@ -41,15 +40,6 @@ double doSomething(edm4hep::ConstMCParticle part) {
     parentEnergy += parent.getEnergy();
   }
   return parentEnergy;
-}
-
-double doSomething(edm4hep::ConstRecoParticleRef part) {
-  constexpr podio::ObjectID invalidObject = {podio::ObjectID::invalid, podio::ObjectID::invalid};
-  if (part.getParticle().getObjectID() == invalidObject) {
-    std::cout << "Reference without particle" << std::endl;
-    return -1;
-  }
-  return part.getParticle().getEnergy();
 }
 
 double doSomething(edm4hep::ConstReconstructedParticle part) {
@@ -133,7 +123,7 @@ void touchAllCollections(podio::EventStore& store,
     if (name == "Particle") {
       touchCollection<edm4hep::MCParticleCollection>(name, store, sizeRecorder);
     } else if (name == "Muon" || name == "Photon" || name == "Electron") {
-      touchCollection<edm4hep::RecoParticleRefCollection>(name, store, sizeRecorder);
+      touchCollection<edm4hep::ReconstructedParticleCollection>(name, store, sizeRecorder);
     } else if (name == "ReconstructedParticles" || name == "Jet" || name == "MissingET") {
       touchCollection<edm4hep::ReconstructedParticleCollection>(name, store, sizeRecorder);
     } else if (name == "EFlowTrack") {
