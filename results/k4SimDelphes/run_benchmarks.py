@@ -50,22 +50,28 @@ def set_taskset(arg):
         TASKSET = ['taskset', '-c', arg]
 
 
-class WallTimeRecorder():
+class MiscInfoRecorder():
     def __init__(self):
         self.write_times = []
         self.read_times = []
+        self.file_sizes = [] # probably static but easier to record it always
 
     def add_read(self, time):
         self.read_times.append(time)
 
+    def add_size(self, size):
+        self.file_sizes.append(size)
+
     def add_write(self, time):
         self.write_times.append(time)
 
-def store_wall_times(wtime_recorder, filename):
+def store_wall_times(info_rec, filename):
     with open(filename, 'w') as logfile:
-        logfile.write('write,read\n')
-        for twrite, tread in zip(wtime_recorder.write_times, wtime_recorder.read_times):
-            logfile.write(f'{twrite}, {tread}\n')
+        logfile.write('write,read,file_size\n')
+        for twrite, tread, fsize in zip(info_rec.write_times,
+                                        info_rec.read_times,
+                                        info_rec.file_sizes):
+            logfile.write(f'{twrite}, {tread}, {fsize}\n')
 
 
 @contextmanager
@@ -88,7 +94,7 @@ def elapsed_timer():
     _Timer.end = default_timer()
 
 
-def run_read_benchmark(input_file, bm_file, wtime_recorder, read_colls):
+def run_read_benchmark(input_file, bm_file, info_rec, read_colls):
     """Run the read benchmarks"""
     # Either use a dedicated version from environment or look for one on PATH
     cmd = os.environ.get('PODIO_READBENCHMARK_EXE', None) or 'read_benchmark'
@@ -109,7 +115,8 @@ def run_read_benchmark(input_file, bm_file, wtime_recorder, read_colls):
 
     logger.debug(f'Process ran {timer()} s'
                  f' and returned with exit code {proc.returncode}')
-    wtime_recorder.add_read(timer().duration())
+    info_rec.add_read(timer().duration())
+    info_rec.add_size(os.path.getsize(input_file))
 
     if proc.returncode != 0:
         logger.error(f'Got non-zero exit code from running {shlex.join(cmd_args)}')
@@ -118,7 +125,7 @@ def run_read_benchmark(input_file, bm_file, wtime_recorder, read_colls):
     return True
 
 
-def run_k4simdelphes(cmd, args, logfile, wtime_recorder):
+def run_k4simdelphes(cmd, args, logfile, info_rec):
     """Run the k4simdelphes reader"""
     # cmd = os.path.expandvars('${K4SIMDELPHES}/bin/') + reader
 
@@ -132,7 +139,7 @@ def run_k4simdelphes(cmd, args, logfile, wtime_recorder):
             proc = subprocess.run(cmd_args, stdout=logf, stderr=subprocess.STDOUT, text=True)
         logger.debug(f'Process ran {timer()} s'
                      f' and returned with exit code {proc.returncode}')
-        wtime_recorder.add_write(timer().duration())
+        info_rec.add_write(timer().duration())
 
         if proc.returncode != 0:
             logger.error(f'Got non-zero exit code from running {shlex.join([cmd] + args)}')
@@ -151,7 +158,7 @@ def get_reader_command(reader, outputfile):
     return os.path.expandvars('${K4SIMDELPHES}/bin/') + reader
 
 
-def run_write_read_benchmark(reader, reader_args, outputfile, label, index, wtime_rec,
+def run_write_read_benchmark(reader, reader_args, outputfile, label, index, info_rec,
                              read_colls=None, keep_output=False):
     """Run k4SimDelphes to produce an outptu file which will then immediately be
     used to run read_benchmark.
@@ -160,7 +167,7 @@ def run_write_read_benchmark(reader, reader_args, outputfile, label, index, wtim
     logger.info(f'Starting write benchmark run {index} for case {label}')
     reader_cmd = get_reader_command(reader, outputfile)
     # We don't have to go any further if we didn't succeed here
-    if not run_k4simdelphes(reader_cmd, reader_args, logfile, wtime_rec):
+    if not run_k4simdelphes(reader_cmd, reader_args, logfile, info_rec):
         return
 
     read_bm_base = os.path.join(
@@ -171,7 +178,7 @@ def run_write_read_benchmark(reader, reader_args, outputfile, label, index, wtim
     read_bm_file = f'{read_bm_base}.{index}.bench.read.root'
     logger.info(f'Starting read benchmark run {index} for case {label}')
     logger.debug(f'Benchmark results for \'{outputfile}\' will be stored in {read_bm_file}')
-    if not run_read_benchmark(outputfile, read_bm_file, wtime_rec, read_colls):
+    if not run_read_benchmark(outputfile, read_bm_file, info_rec, read_colls):
         return
 
     if not keep_output:
@@ -227,19 +234,19 @@ def run(args, reader, reader_arg_f, cases, output_base):
     arguments to the k4SimDelphes reader as a list of strings.
     """
     create_case_output_dirs(args.outdir, cases)
-    wall_time_rec = {case: WallTimeRecorder() for case in cases}
+    misc_info_rec = {case: MiscInfoRecorder() for case in cases}
 
     for i in range(args.nruns):
         for case in cases:
             output_file = f'{args.outdir}/{case}/{output_base}.{i}.{case}'
             converter_args = reader_arg_f(output_file)
             run_write_read_benchmark(reader, converter_args, output_file, case, i,
-                                     wall_time_rec[case],
+                                     misc_info_rec[case],
                                      args.collections,
                                      args.keep_outputs)
 
     for case in cases:
-        store_wall_times(wall_time_rec[case], f'{args.outdir}/wall_times_{case}.csv')
+        store_wall_times(misc_info_rec[case], f'{args.outdir}/wall_times_{case}.csv')
 
 
 if __name__ == '__main__':
